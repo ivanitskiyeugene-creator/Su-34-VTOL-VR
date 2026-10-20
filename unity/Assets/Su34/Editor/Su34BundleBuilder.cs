@@ -528,6 +528,13 @@ namespace Su34.EditorTools
         // whose type contains "Seat", or a Transform/GameObject field named
         // like seat / pilot / crew / WSO on the cockpit component.
         private const bool AlignSeatsSideBySide = true;
+
+        // The donor's instruments are built around its own cockpit station. On a
+        // shorter airframe (T-55 is 13.4 m, the Su-34 is ~25 m) that station is
+        // metres away from our seats, so the whole cockpit group is moved with
+        // the front seat. Set to false to keep the donor cockpit where it was.
+        private const bool MoveDonorCockpitToSu34 = true;
+
         private static readonly Vector3 PilotSeatAnchor = new Vector3(-0.30f, 1.15f, 6.40f);
         private static readonly Vector3 WsoSeatAnchor = new Vector3(0.30f, 1.15f, 6.40f);
 
@@ -649,6 +656,19 @@ namespace Su34.EditorTools
             return filtered;
         }
 
+        private static Transform LowestCommonAncestor(List<Transform> transforms)
+        {
+            if (transforms == null || transforms.Count == 0) return null;
+            Transform lca = transforms[0];
+            for (int i = 1; i < transforms.Count && lca != null; i++)
+            {
+                Transform other = transforms[i];
+                while (lca != null && lca != other && !other.IsChildOf(lca))
+                    lca = lca.parent;
+            }
+            return lca;
+        }
+
         private static int CountSeatRigs(string prefabPath, List<string> report)
         {
             if (string.IsNullOrEmpty(prefabPath) || !File.Exists(prefabPath)) return 0;
@@ -709,6 +729,34 @@ namespace Su34.EditorTools
             {
                 report.Add("seat alignment disabled - donor seating kept");
                 return;
+            }
+
+            // Bring the donor's cockpit group to our cockpit station first, so
+            // its MFDs, HUD and switches sit in front of the crew instead of
+            // staying at the donor's own (much shorter) fuselage position.
+            if (MoveDonorCockpitToSu34 && rigs.Count > 0)
+            {
+                var seatTransforms = new List<Transform>();
+                foreach (var rig in rigs) seatTransforms.Add(rig.transform);
+                Transform cockpit = LowestCommonAncestor(seatTransforms);
+
+                if (cockpit == null || cockpit == root.transform)
+                {
+                    report.Add("donor cockpit group not moved (seat rigs sit directly under the vehicle root)");
+                }
+                else
+                {
+                    Vector3 pilotNow = root.transform.InverseTransformPoint(rigs[0].transform.position);
+                    Vector3 delta = PilotSeatAnchor - pilotNow;
+                    if (delta.magnitude > 0.02f)
+                    {
+                        cockpit.position += root.transform.TransformVector(delta);
+                        report.Add(string.Format(
+                            "donor cockpit group moved: {0} by ({1:0.00}, {2:0.00}, {3:0.00}) so the " +
+                            "front seat lands on the Su-34 pilot chair",
+                            GetPath(root.transform, cockpit), delta.x, delta.y, delta.z));
+                    }
+                }
             }
 
             Vector3[] anchors = { PilotSeatAnchor, WsoSeatAnchor };
