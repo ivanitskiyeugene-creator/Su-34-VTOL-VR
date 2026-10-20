@@ -1,12 +1,12 @@
 """
-Tiny dependency-light mesh construction helpers.
+Tiny dependency-light mesh construction helpers (numpy only).
 
 Everything is built in *Unity* coordinates:
     +X = right wing
     +Y = up
     +Z = nose / forward
 
-The output is a Wavefront OBJ with one material per logical part, which Unity
+The output is a Wavefront OBJ + MTL with per-material textures, which Unity
 2020.3 imports natively as a hierarchy of MeshFilter/MeshRenderer objects.
 """
 from __future__ import annotations
@@ -18,6 +18,7 @@ from typing import Callable, Iterable, Sequence
 import numpy as np
 
 Vec3 = np.ndarray
+UV = tuple[float, float]
 
 
 def v(x: float, y: float, z: float) -> Vec3:
@@ -29,6 +30,31 @@ def normalize(a: Vec3) -> Vec3:
     return a / n if n > 1e-12 else a
 
 
+# --------------------------------------------------------------------- curves
+def catmull_rom(points: np.ndarray, samples: int) -> np.ndarray:
+    """Uniform Catmull-Rom through ``points`` (keeps the end points)."""
+    pts = np.asarray(points, dtype=np.float64)
+    if len(pts) < 3:
+        return pts
+    padded = np.vstack([pts[0], pts, pts[-1]])
+    out = []
+    spans = len(pts) - 1
+    per_span = max(1, samples // spans)
+    for i in range(spans):
+        p0, p1, p2, p3 = padded[i], padded[i + 1], padded[i + 2], padded[i + 3]
+        for k in range(per_span):
+            t = k / per_span
+            t2, t3 = t * t, t * t * t
+            out.append(
+                0.5 * ((2 * p1)
+                       + (-p0 + p2) * t
+                       + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2
+                       + (-p0 + 3 * p1 - 3 * p2 + p3) * t3)
+            )
+    out.append(pts[-1])
+    return np.array(out)
+
+
 @dataclass
 class Part:
     name: str
@@ -36,8 +62,9 @@ class Part:
     vertices: list[Vec3] = field(default_factory=list)
     faces: list[tuple[int, int, int]] = field(default_factory=list)
     smooth: bool = True
-    # optional explicit per-vertex normals (used for hard-surface panels)
     normals: list[Vec3] | None = None
+    #: one (uv_a, uv_b, uv_c) per face; filled by box_uv() or by hand (decals)
+    face_uvs: list[tuple[UV, UV, UV]] = field(default_factory=list)
 
     def add_vertex(self, p: Sequence[float]) -> int:
         self.vertices.append(np.asarray(p, dtype=np.float64))
@@ -76,8 +103,7 @@ class Mesh:
         """Flip triangles so their normals point away from a reference surface.
 
         ``ref_fn(face_center)`` returns a point that lies inside the volume; the
-        face is flipped when its normal points towards that point. This makes
-        the generators immune to winding-order mistakes.
+        face is flipped when its normal points towards that point.
         """
         fixed: list[tuple[int, int, int]] = []
         for ia, ib, ic in part.faces:
@@ -90,6 +116,7 @@ class Mesh:
                 fixed.append((ia, ib, ic))
         part.faces = fixed
         part.normals = None
+        part.face_uvs = []
         return part
 
     def new_part(self, name: str, material: str, smooth: bool = True) -> Part:
@@ -109,11 +136,7 @@ class Mesh:
         smooth: bool = True,
         skip: Callable[[int, int], bool] | None = None,
     ) -> Part:
-        """Loft a list of equal-length rings into a tube/surface.
-
-        ``skip(section_index, segment_index)`` can omit quads, which is how the
-        cockpit opening is cut into the fuselage crown.
-        """
+        """Loft a list of equal-length rings into a tube/surface."""
         part = self.new_part(name, material, smooth)
         n = len(rings[0])
         idx: list[list[int]] = []
@@ -224,6 +247,22 @@ class Mesh:
                 part.add_quad(li[i], ri[i], ri[i + 1], li[i + 1])
         return part
 
+    def quad(
+        self,
+        name: str,
+        material: str,
+        corners: list[Vec3],
+        uvs: list[UV] | None = None,
+    ) -> Part:
+        """Explicit quad (used for decals where UVs must be authored)."""
+        part = self.new_part(name, material, smooth=False)
+        ids = [part.add_vertex(p) for p in corners]
+        part.add_quad(ids[0], ids[1], ids[2], ids[3])
+        if uvs is not None:
+            a, b, c, d = uvs
+            part.face_uvs = [(a, b, c), (a, c, d)]
+        return part
+
 
 # --------------------------------------------------------------------- profiles
 def superellipse_ring(
@@ -233,21 +272,11 @@ def superellipse_ring(
     center_y: float,
     n: float = 2.2,
     count: int = 32,
-    top_cut: tuple[float, float] | None = None,
 ) -> list[Vec3]:
-    """A rounded-rectangle fuselage cross-section in the XY plane.
-
-    ``top_cut`` removes vertices in an angular band (radians) so the loft can
-    leave the canopy opening open instead of skinning over it.
-    """
+    """A rounded-rectangle fuselage cross-section in the XY plane."""
     pts: list[Vec3] = []
     for k in range(count):
         t = 2 * math.pi * k / count
-        if top_cut is not None:
-            lo, hi = top_cut
-            if lo <= t <= hi:
-                # collapse the skipped band to its edges (kept for indexing)
-                t = lo if (t - lo) < (hi - t) else hi
         ct, st = math.cos(t), math.sin(t)
         x = half_width * math.copysign(abs(ct) ** (2.0 / n), ct)
         y = center_y + half_height * math.copysign(abs(st) ** (2.0 / n), st)
@@ -263,10 +292,9 @@ def airfoil_loop(
     thickness: float,
     n: int = 10,
 ) -> list[Vec3]:
-    """Closed symmetric NACA-style airfoil loop with split trailing edge."""
+    """Closed symmetric NACA-style airfoil loop with a blunt trailing edge."""
     xs = [i / (n - 1) for i in range(n)]
-    upper = []
-    lower = []
+    upper, lower = [], []
     for x in xs:
         yt = 5.0 * thickness * (
             0.2969 * math.sqrt(max(x, 0.0))
@@ -277,9 +305,12 @@ def airfoil_loop(
         )
         upper.append(le + chord_dir * (-x * chord) + thickness_dir * (yt * chord))
         lower.append(le + chord_dir * (-x * chord) - thickness_dir * (yt * chord))
-    # upper LE -> TE, then lower TE (coincident, split seam) -> LE (skip LE dup)
-    loop = upper + list(reversed(lower))[1:-1]
-    return loop
+    # Walk the profile as a closed loop: upper surface LE->TE, then the lower
+    # surface TE->LE.  The final lower LE point is the same location as the
+    # first upper point, so it is dropped to avoid a duplicated vertex (which
+    # used to fold the loft into degenerate slivers).  Keeping both TE points
+    # gives the blunt trailing edge the real aircraft has.
+    return upper + list(reversed(lower))[:-1]
 
 
 def lifting_surface(
@@ -296,7 +327,7 @@ def lifting_surface(
 ) -> Part:
     """Loft a wing / fin / stabiliser from spanwise sections.
 
-    section keys: span (m), le (Vec3 = leading-edge point at this station),
+    section keys: le (Vec3 = leading-edge point at this station),
                   chord (m), thickness (ratio)
     """
     rings: list[list[Vec3]] = []
@@ -312,73 +343,108 @@ def lifting_surface(
                 n=airfoil_n,
             )
         )
-    return mesh.loft(
-        name,
-        material,
-        rings,
-        closed_ring=True,
-        cap_start=cap_root,
-        cap_end=cap_tip,
-        smooth=True,
-    )
+    return mesh.loft(name, material, rings, closed_ring=True,
+                     cap_start=cap_root, cap_end=cap_tip, smooth=True)
+
+
+# ------------------------------------------------------------------------ UVs
+def box_uv(part: Part, tile_size: float = 5.0, offset: tuple[float, float] = (0.0, 0.0)) -> None:
+    """World-space box projection: 1 UV unit = ``tile_size`` metres.
+
+    Camouflage and panel lines then keep a constant physical size across the
+    whole aircraft, which is what makes a tiling texture read as "skin" rather
+    than as a repeating pattern.
+    """
+    uvs: list[tuple[UV, UV, UV]] = []
+    for ia, ib, ic in part.faces:
+        a, b, c = part.vertices[ia], part.vertices[ib], part.vertices[ic]
+        n = np.cross(b - a, c - a)
+        if np.linalg.norm(n) < 1e-12:
+            uvs.append(((0.0, 0.0), (0.0, 0.0), (0.0, 0.0)))
+            continue
+        n = abs(n / np.linalg.norm(n))
+        axis = int(np.argmax(n))  # 0 -> YZ plane, 1 -> XZ, 2 -> XY
+        if axis == 0:
+            pick = lambda p: (p[2], p[1])
+        elif axis == 1:
+            pick = lambda p: (p[0], p[2])
+        else:
+            pick = lambda p: (p[0], p[1])
+        uvs.append(tuple(
+            ((pick(p)[0] / tile_size) + offset[0], (pick(p)[1] / tile_size) + offset[1])
+            for p in (a, b, c)
+        ))
+    part.face_uvs = uvs  # type: ignore[assignment]
+
+
+def apply_box_uv(mesh: Mesh, tile_size: float = 5.0) -> None:
+    for part in mesh.parts:
+        if not part.face_uvs:
+            box_uv(part, tile_size)
 
 
 # ------------------------------------------------------------------------ OBJ IO
 def write_obj(path: str, mesh: Mesh, mtl_name: str = "su34.mtl") -> None:
-    lines: list[str] = [
+    v_lines: list[str] = []
+    vt_lines: list[str] = []
+    vn_lines: list[str] = []
+    body: list[str] = []
+    v_index: dict[tuple, int] = {}
+    vt_index: dict[tuple, int] = {}
+    vn_index: dict[tuple, int] = {}
+
+    def idx_v(p) -> int:
+        key = tuple(np.round(p, 5))
+        if key not in v_index:
+            v_index[key] = len(v_lines) + 1
+            v_lines.append("v %.5f %.5f %.5f" % key)
+        return v_index[key]
+
+    def idx_vt(uv) -> int:
+        key = (round(uv[0], 5), round(uv[1], 5))
+        if key not in vt_index:
+            vt_index[key] = len(vt_lines) + 1
+            vt_lines.append("vt %.5f %.5f" % key)
+        return vt_index[key]
+
+    def idx_vn(n) -> int:
+        key = tuple(np.round(n, 5))
+        if key not in vn_index:
+            vn_index[key] = len(vn_lines) + 1
+            vn_lines.append("vn %.5f %.5f %.5f" % key)
+        return vn_index[key]
+
+    for part in mesh.parts:
+        normals = part.compute_normals()
+        uvs = part.face_uvs
+        use_uv = len(uvs) == len(part.faces)
+        body.append(f"o {part.name}")
+        body.append(f"usemtl {part.material}")
+        for fi, (ia, ib, ic) in enumerate(part.faces):
+            a, b, c = part.vertices[ia], part.vertices[ib], part.vertices[ic]
+            face_n = normalize(np.cross(b - a, c - a))
+            corners = []
+            for k, vi in enumerate((ia, ib, ic)):
+                if part.smooth:
+                    n = normals[vi]
+                    if np.linalg.norm(n) < 1e-9:
+                        n = face_n
+                else:
+                    n = face_n
+                uv = uvs[fi][k] if use_uv else (0.0, 0.0)
+                corners.append((idx_v(part.vertices[vi]), idx_vt(uv), idx_vn(n)))
+            body.append("f %d/%d/%d %d/%d/%d %d/%d/%d" % (
+                corners[0][0], corners[0][1], corners[0][2],
+                corners[1][0], corners[1][1], corners[1][2],
+                corners[2][0], corners[2][1], corners[2][2],
+            ))
+
+    lines = [
         "# Su-34 model for VTOL VR - generated by tools/su34_model/generate_su34.py",
         "# Units: metres. Axes: +X right, +Y up, +Z nose.",
         f"mtllib {mtl_name}",
     ]
-    vcount = 0
-    for part in mesh.parts:
-        lines.append(f"o {part.name}")
-        lines.append(f"usemtl {part.material}")
-        normals = part.compute_normals()
-        # (position, normal) dedup table keeps the file compact while preserving
-        # hard edges because flat parts get per-face normals below.
-        key_to_index: dict[tuple, int] = {}
-        tri_entries: list[tuple[tuple, tuple, tuple]] = []
-        for ia, ib, ic in part.faces:
-            face_n = normalize(np.cross(part.vertices[ib] - part.vertices[ia],
-                                        part.vertices[ic] - part.vertices[ia]))
-            if not part.smooth:
-                entry = []
-                for i in (ia, ib, ic):
-                    entry.append((tuple(np.round(part.vertices[i], 6)),
-                                  tuple(np.round(face_n, 6))))
-                tri_entries.append(tuple(entry))
-            else:
-                entry = []
-                for i in (ia, ib, ic):
-                    nn = normals[i]
-                    # guard against degenerate averaged normals
-                    if np.linalg.norm(nn) < 1e-9:
-                        nn = face_n
-                    entry.append((tuple(np.round(part.vertices[i], 6)),
-                                  tuple(np.round(nn, 6))))
-                tri_entries.append(tuple(entry))
-
-        # emit vertices/normals
-        entries: list[tuple] = []
-        for tri in tri_entries:
-            for e in tri:
-                key = (e[0], e[1])
-                if key not in key_to_index:
-                    key_to_index[key] = vcount
-                    vcount += 1
-                    lines.append("v %.6f %.6f %.6f" % e[0])
-                    lines.append("vn %.6f %.6f %.6f" % e[1])
-                entries.append((key, e))
-        # faces in the same order as generated
-        face_lines = []
-        for k in range(0, len(entries), 3):
-            a = key_to_index[entries[k][0]] + 1
-            b = key_to_index[entries[k + 1][0]] + 1
-            c = key_to_index[entries[k + 2][0]] + 1
-            face_lines.append(f"f {a}//{a} {b}//{b} {c}//{c}")
-        lines.extend(face_lines)
-
+    lines += v_lines + vt_lines + vn_lines + body
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(lines) + "\n")
 
@@ -393,6 +459,10 @@ def write_mtl(path: str, materials: dict[str, dict]) -> None:
         out.append("Ns %.1f" % m.get("shininess", 24.0))
         out.append("d %.4f" % m.get("alpha", 1.0))
         out.append("illum %d" % (2 if m.get("alpha", 1.0) < 1.0 else 2))
+        if m.get("map"):
+            out.append("map_Kd %s" % m["map"])
+        if m.get("map_alpha"):
+            out.append("map_d %s" % m["map_alpha"])
         out.append("")
     with open(path, "w", encoding="utf-8") as fh:
         fh.write("\n".join(out) + "\n")

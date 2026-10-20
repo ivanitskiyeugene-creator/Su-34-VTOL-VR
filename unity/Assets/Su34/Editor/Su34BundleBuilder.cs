@@ -80,19 +80,68 @@ namespace Su34.EditorTools
         };
 
         // ------------------------------------------------------------------ menu
-        [MenuItem("VTOL VR/Su-34/0 - Check setup", priority = 0)]
+        // The OBJ, its MTL and the PNG textures live in the repository
+        // (assets/model). Unity's OBJ importer resolves "textures/foo.png"
+        // relative to the OBJ, so the PNGs have to sit in Models/textures.
+        // Copying them automatically removes a step that is easy to get wrong.
+        private const string ModelsDir = "Assets/Su34/Models";
+
+        private static string RepoModelDir
+        {
+            get
+            {
+                string project = Directory.GetCurrentDirectory();   // ...\unity
+                return Path.GetFullPath(Path.Combine(project, "..", "assets", "model"));
+            }
+        }
+
+        [MenuItem("VTOL VR/Su-34/0 - Copy model + textures into Assets", priority = 0)]
+        public static void CopyModelAssets()
+        {
+            string source = RepoModelDir;
+            if (!Directory.Exists(source))
+            {
+                Debug.LogError("[Su-34] cannot find the model folder: " + source +
+                               " - run this from the unity/ folder of the repository.");
+                return;
+            }
+            EnsureFolder("Assets/Su34");
+            EnsureFolder(ModelsDir);
+            EnsureFolder(ModelsDir + "/textures");
+
+            int copied = 0;
+            foreach (string file in Directory.GetFiles(source))
+            {
+                string ext = Path.GetExtension(file).ToLowerInvariant();
+                if (ext != ".obj" && ext != ".mtl") continue;
+                File.Copy(file, Path.Combine(ModelsDir, Path.GetFileName(file)), true);
+                copied++;
+            }
+            foreach (string file in Directory.GetFiles(Path.Combine(source, "textures")))
+            {
+                if (Path.GetExtension(file).ToLowerInvariant() != ".png") continue;
+                File.Copy(file, Path.Combine(ModelsDir, "textures", Path.GetFileName(file)), true);
+                copied++;
+            }
+            AssetDatabase.Refresh();
+            Debug.Log("[Su-34] copied " + copied + " model files into " + ModelsDir);
+        }
+
+        [MenuItem("VTOL VR/Su-34/0b - Check setup", priority = 1)]
         public static void CheckSetup()
         {
+            CopyModelAssets();
             bool ok = true;
             ok &= CheckFile(DonorPrefab, "F/A-26B donor prefab (AssetRipper export of VTOL VR)");
-            ok &= CheckFile(ModelObjPath, "Su-34 model (copy assets/model/* into Assets/Su34/Models/)");
+            ok &= CheckFile(ModelObjPath, "Su-34 model");
+            ok &= CheckFolder(ModelsDir + "/textures", "Su-34 textures");
             ok &= CheckFolder("Assets/Su34", "output folder");
             Debug.Log(ok
                 ? "[Su-34] Setup looks good - run '2 - Build prefab + asset bundle'."
                 : "[Su-34] Fix the missing paths above, then run the check again.");
         }
 
-        [MenuItem("VTOL VR/Su-34/1 - Dump donor hierarchy", priority = 1)]
+        [MenuItem("VTOL VR/Su-34/1 - Dump donor hierarchy", priority = 2)]
         public static void DumpHierarchy()
         {
             if (!CheckFile(DonorPrefab, "donor prefab")) return;
@@ -119,9 +168,10 @@ namespace Su34.EditorTools
             }
         }
 
-        [MenuItem("VTOL VR/Su-34/2 - Build prefab + asset bundle", priority = 2)]
+        [MenuItem("VTOL VR/Su-34/2 - Build prefab + asset bundle", priority = 3)]
         public static void Build()
         {
+            CopyModelAssets();
             if (!CheckFile(DonorPrefab, "donor prefab")) return;
             if (!CheckFile(ModelObjPath, "Su-34 model")) return;
 
@@ -143,6 +193,9 @@ namespace Su34.EditorTools
 
                 // ------------------------------------------- hide donor exterior
                 HideDonorExterior(root, report);
+
+                // ------------------------------------------- crew seat anchors
+                AddCrewAnchors(root, report);
 
                 // ------------------------------------------------------- save prefab
                 var saved = PrefabUtility.SaveAsPrefabAsset(root, OutputPrefabPath);
@@ -353,6 +406,45 @@ namespace Su34.EditorTools
                     report.Add("glass material made transparent: " + mat.name);
                 }
             }
+        }
+
+        // The Su-34 cockpit is side-by-side: pilot on the left, weapons systems
+        // officer on the right, exactly as in the real aircraft. The model in
+        // this repository already contains that interior (SU-34_Seat*, panel,
+        // MFDs, HUD, consoles), so the external view is correct.
+        //
+        // These two empty transforms mark where the crew sits. They are useful
+        // for cameras, mission logic generators and for a future custom
+        // cockpit. NOTE: VTOL VR itself still flies a single player per
+        // vehicle; a second live player in the right-hand seat needs a custom
+        // interactable cockpit, which this mod does not have yet.
+        private static void AddCrewAnchors(GameObject root, List<string> report)
+        {
+            // Values match tools/su34_model/generate_su34.py: seats at x = +-0.30,
+            // eye height 1.15, seat centre z = 6.40 (nose points along +Z).
+            var existing = root.transform.Find("Su34_CrewSeats");
+            GameObject seats = existing != null
+                ? existing.gameObject
+                : new GameObject("Su34_CrewSeats");
+            seats.transform.SetParent(root.transform, false);
+            seats.transform.localPosition = Vector3.zero;
+            seats.transform.localRotation = Quaternion.identity;
+
+            CreateAnchor(seats.transform, "CrewSeat_Pilot", new Vector3(-0.30f, 1.15f, 6.40f));
+            CreateAnchor(seats.transform, "CrewSeat_WSO", new Vector3(0.30f, 1.15f, 6.40f));
+
+            report.Add("crew anchors: CrewSeat_Pilot (-0.30, 1.15, 6.40), " +
+                       "CrewSeat_WSO (+0.30, 1.15, 6.40) [side-by-side]");
+            Debug.Log("[Su-34] crew anchors added (side-by-side pilot / WSO)");
+        }
+
+        private static void CreateAnchor(Transform parent, string name, Vector3 localPos)
+        {
+            var existing = parent.Find(name);
+            GameObject go = existing != null ? existing.gameObject : new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
         }
 
         private static void HideDonorExterior(GameObject root, List<string> report)
