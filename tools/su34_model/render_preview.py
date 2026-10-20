@@ -354,12 +354,12 @@ def cockpit_sheet(verts, uvs, normals, tris, mats) -> None:
         ("interior - glass hidden", True,
          Camera(np.array([1.9, 1.75, 4.9]), np.array([-0.05, 0.55, 6.9]),
                 np.array([0.0, 1.0, 0.0]), 58), 0.90),
-        ("pilot seat (left), glass hidden", True,
-         Camera(np.array([-0.30, 1.15, 6.40]), np.array([0.0, 1.00, 18.0]),
-                np.array([0.0, 1.0, 0.0]), 72), 0.85),
-        ("WSO seat (right), glass hidden", True,
-         Camera(np.array([0.30, 1.15, 6.40]), np.array([0.0, 1.00, 18.0]),
-                np.array([0.0, 1.0, 0.0]), 72), 0.85),
+        ("two seats from above, glass hidden", True,
+         Camera(np.array([0.0, 3.30, 4.95]), np.array([0.0, 0.60, 6.75]),
+                np.array([0.0, 0.0, 1.0]), 52), 0.85),
+        ("crew stations from the windscreen, glass hidden", True,
+         Camera(np.array([0.0, 1.55, 7.95]), np.array([0.0, 0.90, 5.40]),
+                np.array([0.0, 1.0, 0.0]), 66), 0.85),
     ]
     panels = []
     for label, drop_glass, cam, amb in shots:
