@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
@@ -249,23 +250,56 @@ namespace Su34.EditorTools
             // SerializedObject keeps this working even if the field layout of
             // ExternalVehicleInfo changes between game versions.
             var so = new SerializedObject(info);
-            SetString(so, "vehicleName", VehicleName, report);
-            SetString(so, "description", VehicleDescription, report);
-            SetString(so, "nickname", VehicleNickname, report);
+            bool okName = SetString(so, new[] { "vehicleName", "name", "displayName", "vehicleTitle" },
+                VehicleName, report);
+            SetString(so, new[] { "description", "desc", "vehicleDescription" }, VehicleDescription, report);
+            SetString(so, new[] { "nickname", "shortName", "callsign" }, VehicleNickname, report);
             so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Belt and braces: some builds keep these as plain runtime fields.
+            SetFieldByReflection(info, new[] { "vehicleName", "name", "displayName", "vehicleTitle" }, VehicleName);
+            SetFieldByReflection(info, new[] { "nickname", "shortName", "callsign" }, VehicleNickname);
+
             EditorUtility.SetDirty(info);
-            report.Add("ExternalVehicleInfo: " + VehicleName + " / " + VehicleNickname);
+            report.Add("ExternalVehicleInfo: " + VehicleName + " / " + VehicleNickname +
+                       (okName ? "" : "  <-- vehicleName field not found, see field dump below"));
+
+            // Dump the real field names so a mismatch is visible instead of
+            // silently producing an unselectable aircraft.
+            var fields = info.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            report.Add("ExternalVehicleInfo fields (" + fields.Length + "):");
+            foreach (var f in fields)
+            {
+                object value = null;
+                try { value = f.GetValue(info); } catch { }
+                report.Add("   " + f.FieldType.Name + " " + f.Name + " = " + (value ?? "null"));
+            }
         }
 
-        private static void SetString(SerializedObject so, string property, string value, List<string> report)
+        private static void SetFieldByReflection(object target, string[] names, string value)
         {
-            var p = so.FindProperty(property);
-            if (p == null)
+            var t = target.GetType();
+            foreach (var name in names)
             {
-                report.Add("WARNING: ExternalVehicleInfo has no field '" + property + "' on this game build");
-                return;
+                var f = t.GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (f == null || f.FieldType != typeof(string)) continue;
+                f.SetValue(target, value);
             }
-            p.stringValue = value;
+        }
+
+        private static bool SetString(SerializedObject so, string[] properties, string value, List<string> report)
+        {
+            foreach (var property in properties)
+            {
+                var p = so.FindProperty(property);
+                if (p == null || p.propertyType != SerializedPropertyType.String) continue;
+                p.stringValue = value;
+                report.Add("ExternalVehicleInfo." + property + " = " + value);
+                return true;
+            }
+            report.Add("WARNING: none of [" + string.Join(", ", properties) +
+                       "] exist on ExternalVehicleInfo in this game build");
+            return false;
         }
 
         private static void AttachModel(GameObject root, List<string> report)
