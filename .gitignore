@@ -1,0 +1,45 @@
+# --- .NET / build output -------------------------------------------------
+[Bb]in/
+[Oo]bj/
+build/
+*.user
+*.suo
+.vs/
+
+# --- Unity ----------------------------------------------------------------
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+Recordings/
+AssetBundles/
+AssetBundles.meta
+*.csproj.user
+*.unityproj
+*.sln.DotSettings.user
+sysinfo.txt
+crashlytics-build.properties
+Su34_donor_hierarchy.txt
+
+# --- build artifacts inside the mod folder --------------------------------
+# The compiled dll and the asset bundle are produced by tools/build.ps1 and
+# the Unity builder; keep the folder itself (item.json, cfg) in git.
+mod/Su34Mod.dll
+mod/Su34Mod.pdb
+mod/su34
+mod/su34.manifest
+mod/build_report.txt
+
+# --- OS -------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- python ---------------------------------------------------------------
+__pycache__/
+*.pyc
+.venv/

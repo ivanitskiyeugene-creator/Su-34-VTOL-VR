@@ -1,0 +1,104 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Builds Su34Mod.dll for the VTOL VR Mod Loader.
+
+    Point VtolDir at your game folder, e.g.
+      dotnet build -c Release -p:VtolDir="D:\Steam\steamapps\common\VTOL VR"
+    or just copy Directory.Build.props.example to Directory.Build.props and edit
+    it once. tools/build.ps1 does that automatically.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Su34Mod</AssemblyName>
+    <RootNamespace>Su34Mod</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Version>0.1.0</Version>
+    <Company>Arena.ai</Company>
+    <Product>VTOL VR Su-34</Product>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+
+  <!-- Fall back to the default Steam library when VtolDir was not given. -->
+  <PropertyGroup Condition="'$(VtolDir)' == ''">
+    <VtolDir Condition="Exists('C:\Program Files (x86)\Steam\steamapps\common\VTOL VR')">C:\Program Files (x86)\Steam\steamapps\common\VTOL VR</VtolDir>
+  </PropertyGroup>
+
+  <Target Name="CheckVtolDir" BeforeTargets="BeforeBuild">
+    <Error Condition="'$(VtolDir)' == ''"
+           Text="VTOL VR not found. Build with: dotnet build -p:VtolDir=&quot;X:\Steam\steamapps\common\VTOL VR&quot;" />
+    <Error Condition="!Exists('$(VtolDir)\VTOLVR_Data\Managed\Assembly-CSharp.dll')"
+           Text="Assembly-CSharp.dll was not found under $(VtolDir). Check the path." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>$(VtolDir)\@Mod Loader\Managed\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ModLoader.Framework">
+      <HintPath>$(VtolDir)\@Mod Loader\Managed\ModLoader.Framework.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp" Publicize="True">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp-firstpass">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.AudioModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(VtolDir)\VTOLVR_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

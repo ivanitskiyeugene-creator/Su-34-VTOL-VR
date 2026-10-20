@@ -1,0 +1,17 @@
+{
+  "$schema": "https://gitlab.com/vtolvr-mods/ModLoader/-/raw/release/schema.json",
+  "Title": "Su-34 Fullback",
+  "Description": "Su-34 Fullback - twin-seat, twin-engine strike fighter for VTOL VR. Custom exterior model, side-by-side cockpit layout on a proven flight model, full loadout and mission-editor support. Model built from scratch for this mod (no game assets were copied).",
+  "PreviewImageUrl": "",
+  "Tags": [
+    "Aircraft",
+    "Su-34"
+  ],
+  "PublishFieldId": 0,
+  "MetaData": {
+    "DllName": "Su34Mod.dll",
+    "AllowLoadOnStart": true,
+    "ShowOnMainList": true,
+    "DllHash": ""
+  }
+}
