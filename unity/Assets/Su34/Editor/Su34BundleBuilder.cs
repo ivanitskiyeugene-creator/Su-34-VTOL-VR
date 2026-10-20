@@ -161,9 +161,13 @@ namespace Su34.EditorTools
             return name.Replace("/", "");
         }
 
+        // Only applied to the donor: our own Su34_Visual is skipped by path.
+        // The donor's seats and canopy are left out on purpose - the model in
+        // this repo has both of its own, and two overlapping cockpits read as
+        // a mess. Hands/helmet stay so the pilot still has VR presence.
         private static readonly string[] KeepVisibleKeywords =
         {
-            "cockpit", "interior", "seat", "mfd", "hud", "canopy", "stick",
+            "cockpit", "interior", "mfd", "hud", "stick",
             "throttle", "panel", "switch", "button", "helmet", "pilot", "glove"
         };
 
