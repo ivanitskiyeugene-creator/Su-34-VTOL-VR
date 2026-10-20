@@ -171,9 +171,9 @@ def build_canopy(mesh: Mesh) -> None:
         # thin arch: a second ring slightly behind
         pts2 = [v(p[0] * 1.01, p[1], p[2] - 0.055) for p in pts]
         mesh.quad_strip("Su34_CanopyFrame", "Su34_Frame", pts, pts2, smooth=False)
-    # centre rail along the windshield
-    # follow the canopy top curve
-    rail_l = [v(-0.035, 0.94 + (1.65 - 0.94) * (0.35 if z > 7.0 else 0.85), z) for z in (7.65, 7.2, 6.6, 5.9)]
+    # centre rail along the windshield: follow the canopy crown at each station
+    crown = {7.65: 1.05, 7.20: 1.34, 6.60: 1.52, 5.90: 1.62}
+    rail_l = [v(-0.035, crown[z] - 0.01, z) for z in (7.65, 7.2, 6.6, 5.9)]
     rail_r = [v(0.035, p[1], p[2]) for p in rail_l]
     mesh.quad_strip("Su34_CanopyRail", "Su34_Frame", rail_l, rail_r, smooth=False)
 
