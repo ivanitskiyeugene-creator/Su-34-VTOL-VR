@@ -45,6 +45,33 @@ namespace Su34.EditorTools
 
         // Children whose names contain one of these words are part of the
         // cockpit the player actually interacts with, so they stay visible.
+        private static string _resolvedDonor;
+
+        // Fallback: if the default path does not exist, search the project for
+        // the FA-26B prefab. AssetRipper exports vary slightly between
+        // versions, so this removes the most common setup failure.
+        private static string DonorPrefab
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_resolvedDonor)) return _resolvedDonor;
+                if (File.Exists(DonorPrefabPath)) { _resolvedDonor = DonorPrefabPath; return _resolvedDonor; }
+                foreach (var guid in AssetDatabase.FindAssets("FA-26B t:GameObject"))
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase) &&
+                        path.IndexOf("vehicle", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        _resolvedDonor = path;
+                        Debug.Log("[Su-34] donor prefab auto-detected: " + path);
+                        return _resolvedDonor;
+                    }
+                }
+                _resolvedDonor = DonorPrefabPath;
+                return _resolvedDonor;
+            }
+        }
+
         private static readonly string[] KeepVisibleKeywords =
         {
             "cockpit", "interior", "seat", "mfd", "hud", "canopy", "stick",
@@ -56,7 +83,7 @@ namespace Su34.EditorTools
         public static void CheckSetup()
         {
             bool ok = true;
-            ok &= CheckFile(DonorPrefabPath, "F/A-26B donor prefab (AssetRipper export of VTOL VR)");
+            ok &= CheckFile(DonorPrefab, "F/A-26B donor prefab (AssetRipper export of VTOL VR)");
             ok &= CheckFile(ModelObjPath, "Su-34 model (copy assets/model/* into Assets/Su34/Models/)");
             ok &= CheckFolder("Assets/Su34", "output folder");
             Debug.Log(ok
@@ -67,12 +94,12 @@ namespace Su34.EditorTools
         [MenuItem("VTOL VR/Su-34/1 - Dump donor hierarchy", priority = 1)]
         public static void DumpHierarchy()
         {
-            if (!CheckFile(DonorPrefabPath, "donor prefab")) return;
-            GameObject root = PrefabUtility.LoadPrefabContents(DonorPrefabPath);
+            if (!CheckFile(DonorPrefab, "donor prefab")) return;
+            GameObject root = PrefabUtility.LoadPrefabContents(DonorPrefab);
             try
             {
                 var sb = new StringBuilder();
-                sb.AppendLine("Donor hierarchy of " + DonorPrefabPath);
+                sb.AppendLine("Donor hierarchy of " + DonorPrefab);
                 foreach (var t in root.GetComponentsInChildren<Transform>(true))
                 {
                     var r = t.GetComponent<Renderer>();
@@ -94,12 +121,12 @@ namespace Su34.EditorTools
         [MenuItem("VTOL VR/Su-34/2 - Build prefab + asset bundle", priority = 2)]
         public static void Build()
         {
-            if (!CheckFile(DonorPrefabPath, "donor prefab")) return;
+            if (!CheckFile(DonorPrefab, "donor prefab")) return;
             if (!CheckFile(ModelObjPath, "Su-34 model")) return;
 
             EnsureFolder("Assets/Su34");
 
-            GameObject root = PrefabUtility.LoadPrefabContents(DonorPrefabPath);
+            GameObject root = PrefabUtility.LoadPrefabContents(DonorPrefab);
             List<string> report = new List<string>();
             try
             {
@@ -165,6 +192,55 @@ namespace Su34.EditorTools
             File.WriteAllText(reportPath, string.Join("\n", report));
             Debug.Log("[Su-34] build report: " + reportPath);
             Debug.Log("[Su-34] DONE. Run tools/install.ps1 (or copy mod\\* to the Mods folder) and launch VTOL VR.");
+        }
+
+        [MenuItem("VTOL VR/Su-34/3 - Build DLL and install into the game", priority = 3)]
+        public static void BuildDllAndInstall()
+        {
+            string repo = Path.GetFullPath(Path.Combine(Application.dataPath, "..", ".."));
+            string script = Path.Combine(repo, "tools", "build.ps1");
+            if (!File.Exists(script))
+            {
+                Debug.LogError("[Su-34] tools/build.ps1 not found under " + repo);
+                return;
+            }
+            if (!File.Exists(Path.Combine(repo, "mod", BundleName)))
+            {
+                Debug.LogError("[Su-34] mod/" + BundleName + " is missing - run step 2 first.");
+                return;
+            }
+            RunPowerShell("-ExecutionPolicy Bypass -File \"" + script + "\" -Deploy", repo);
+        }
+
+        private static void RunPowerShell(string arguments, string workingDirectory)
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = arguments,
+                    WorkingDirectory = workingDirectory,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+                using (var p = System.Diagnostics.Process.Start(psi))
+                {
+                    string stdout = p.StandardOutput.ReadToEnd();
+                    string stderr = p.StandardError.ReadToEnd();
+                    p.WaitForExit();
+                    if (!string.IsNullOrEmpty(stdout)) Debug.Log("[Su-34] build.ps1:\n" + stdout);
+                    if (!string.IsNullOrEmpty(stderr)) Debug.LogError("[Su-34] build.ps1 errors:\n" + stderr);
+                    Debug.Log(p.ExitCode == 0 ? "[Su-34] DLL built and installed." : "[Su-34] build.ps1 exited with " + p.ExitCode);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[Su-34] could not run PowerShell: " + e.Message +
+                               " - run tools/build.ps1 manually from the repository root.");
+            }
         }
 
         // ---------------------------------------------------------------- helpers

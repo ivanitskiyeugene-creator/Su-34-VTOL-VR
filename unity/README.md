@@ -59,6 +59,11 @@ VTOL VR собран на Unity 2020.3.x. Точную версию видно:
 | `0 - Check setup` | проверяет, что на месте префаб-донор и модель |
 | `1 - Dump donor hierarchy` | пишет в корень проекта `Su34_donor_hierarchy.txt` со всеми объектами донора — по нему видно, какие части кабины оставить |
 | `2 - Build prefab + asset bundle` | собирает `Su34.prefab`, бандл `su34` и копирует его в `mod/` этого репозитория |
+| `3 - Build DLL and install into the game` | запускает `tools/build.ps1 -Deploy`: собирает `Su34Mod.dll` и ставит всё в `@Mod Loader/Mods/Su-34` |
+
+Префаб-донор ищется автоматически: сначала по пути `Assets/Resources/vehicles/FA-26B.prefab`,
+если его нет — поиском по проекту среди `*.prefab`, в пути которых есть «vehicle».
+Выбранный путь печатается в консоль.
 
 После `2 - ...` в `mod/` появятся:
 
