@@ -63,8 +63,8 @@ map_Kd textures/su34_metal.png
 
 newmtl Su34_Nozzle
 Ka 0.0 0.0 0.0
-Kd 0.4200 0.4000 0.3800
-Ks 0.8500 0.8000 0.7500
+Kd 0.3400 0.3400 0.3500
+Ks 0.8500 0.8200 0.7800
 Ns 150.0
 d 1.0000
 illum 2

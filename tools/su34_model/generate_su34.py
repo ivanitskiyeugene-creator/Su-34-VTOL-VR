@@ -49,7 +49,7 @@ MATERIALS = {
                        "shininess": 60, "map": TEX + "su34_frame.png"},
     "Su34_Metal":     {"color": (0.502, 0.518, 0.533), "specular": (0.78, 0.78, 0.80),
                        "shininess": 120, "map": TEX + "su34_metal.png"},
-    "Su34_Nozzle":    {"color": (0.42, 0.40, 0.38), "specular": (0.85, 0.80, 0.75),
+    "Su34_Nozzle":    {"color": (0.34, 0.34, 0.35), "specular": (0.85, 0.82, 0.78),
                        "shininess": 150, "map": TEX + "su34_nozzle.png"},
     "Su34_Intake":    {"color": (0.10, 0.11, 0.12), "specular": (0.02, 0.02, 0.02),
                        "shininess": 6, "map": TEX + "su34_intake.png"},
@@ -83,11 +83,12 @@ MATERIALS = {
 FUSELAGE_CONTROL = [
     # The forward fuselage is the Su-34 "platypus": wider than it is deep and
     # quite flat on top, so the radians are not an egg.
-    (11.90, 0.14, 0.05, -0.05, 2.20),
-    (11.55, 0.42, 0.21, -0.17, 2.30),
-    (11.10, 0.71, 0.38, -0.30, 2.45),
-    (10.60, 0.96, 0.52, -0.44, 2.55),
-    (9.95, 1.16, 0.63, -0.54, 2.65),
+    (11.42, 0.30, 0.17, -0.13, 2.30),
+    (11.16, 0.56, 0.30, -0.24, 2.40),
+    (10.82, 0.82, 0.43, -0.36, 2.50),
+    (10.42, 1.02, 0.54, -0.46, 2.58),
+    (10.00, 1.15, 0.62, -0.53, 2.64),
+    (9.62, 1.23, 0.68, -0.57, 2.70),
     (9.30, 1.27, 0.72, -0.60, 2.72),
     (8.60, 1.28, 0.81, -0.72, 2.75),
     (7.90, 1.29, 0.90, -0.84, 2.80),
@@ -126,7 +127,7 @@ CANOPY_SECTIONS = [
 ]
 
 
-def smooth_fuselage(samples: int = 92) -> np.ndarray:
+def smooth_fuselage(samples: int = 120) -> np.ndarray:
     """Catmull-Rom through the control stations, z descending as given."""
     return catmull_rom(np.array(FUSELAGE_CONTROL, dtype=np.float64), samples)
 
@@ -724,10 +725,10 @@ def build_details(mesh: Mesh) -> None:
     # nose: pitot booms and the IRST ball offset to port
     # dark tip on the radome, then the single centre pitot boom
     mesh.cylinder("Su34_RadomeTip", "Su34_Frame",
-                  v(0.0, 0.0, 11.40), v(0.0, 0.0, 11.95), 0.17, 0.075, segments=16)
+                  v(0.0, 0.0, 11.05), v(0.0, 0.0, 11.60), 0.17, 0.075, segments=16)
     mesh.cylinder("Su34_Pitot", "Su34_Metal",
-                  v(0.0, 0.0, 11.85), v(0.0, 0.0, 13.00), 0.030, 0.010, segments=8)
-    mesh.box("Su34_PitotVane", "Su34_Metal", v(0.0, 0.0, 12.62), (0.02, 0.02, 0.16))
+                  v(0.0, 0.0, 11.55), v(0.0, 0.0, 12.62), 0.030, 0.010, segments=8)
+    mesh.box("Su34_PitotVane", "Su34_Metal", v(0.0, 0.0, 12.28), (0.02, 0.02, 0.16))
 
     # IRST sphere in front of the windscreen (right of centreline on the Su-34)
     mesh.cylinder("Su34_IRST", "Su34_Frame",

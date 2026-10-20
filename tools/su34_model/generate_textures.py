@@ -194,17 +194,17 @@ def make_nozzle(name: str, seed: int) -> str:
     arr = np.zeros((h, w, 3), dtype=np.float32)
     for y in range(h):
         t = y / h
-        # bluish close to the petals, straw/brown towards the edges
-        arr[y, :, 0] = 96 + 34 * math.sin(t * math.pi * 2.1) ** 2
-        arr[y, :, 1] = 92 + 18 * math.sin(t * math.pi * 1.7) ** 2
-        arr[y, :, 2] = 92 + 26 * math.cos(t * math.pi * 1.9) ** 2
+        # dark titanium: a faint straw/blue heat tint, no brown racing stripes
+        arr[y, :, 0] = 72 + 16 * math.sin(t * math.pi * 2.1) ** 2
+        arr[y, :, 1] = 72 + 12 * math.sin(t * math.pi * 1.7) ** 2
+        arr[y, :, 2] = 76 + 14 * math.cos(t * math.pi * 1.9) ** 2
     img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
     rng = random.Random(seed)
     d = ImageDraw.Draw(img)
-    for _ in range(70):
+    for _ in range(14):
         x = rng.uniform(0, SIZE)
-        col = (rng.randint(20, 60), rng.randint(18, 52), rng.randint(18, 50))
-        line(d, (x, 0), (x + rng.uniform(-30, 30), SIZE), (*col, 60), width=rng.randint(1, 5))
+        col = (rng.randint(40, 70), rng.randint(40, 70), rng.randint(46, 78))
+        line(d, (x, 0), (x + rng.uniform(-20, 20), SIZE), (*col, 26), width=rng.randint(1, 3))
     img = img.filter(ImageFilter.GaussianBlur(0.6))
     n = noise_layer(seed + 1, scale=2, blur=1.0)
     arr = np.asarray(img).astype(np.float32) + ((np.asarray(n).astype(np.float32) - 128.0) * 0.14)[..., None]
