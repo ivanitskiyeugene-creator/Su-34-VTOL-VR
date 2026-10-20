@@ -2,13 +2,20 @@
 //  Su-34 for VTOL VR - one-click Unity builder
 //
 //  What it does:
-//    1. loads the F/A-26B prefab from your AssetRipper export of VTOL VR
-//       (that prefab already carries the flight model, gear, weapons,
-//       cockpit, MFDs and VR interactables),
+//    1. loads a vehicle prefab from your AssetRipper export of VTOL VR. The
+//       preferred donor is a *two-crew* jet (EF-24G, then T-55), because VTOL
+//       VR only offers a second player slot for vehicles whose prefab has two
+//       seat rigs. The two-seat prefabs also carry the flight model, gear,
+//       weapons, cockpit, MFDs and VR interactables. If neither DLC is
+//       installed the builder falls back to the single-seat F/A-26B and logs
+//       that the second player will not be able to join,
 //    2. renames it "Su34", adds ExternalVehicleInfo and fills in the mod data,
 //    3. drops the procedural Su-34 exterior from this repo under the root and
 //       hides the donor's exterior renderers (cockpit / MFD / seat stay),
-//    4. saves the prefab, tags it for an asset bundle named "su34" and builds
+//    4. moves the donor's two seat rigs to the Su-34 chairs, side by side
+//       (pilot left, WSO right) - that is what turns a tandem two-seater into
+//       a two-player Su-34,
+//    5. saves the prefab, tags it for an asset bundle named "su34" and builds
 //       the Windows bundle straight into  mod/su34  in this repository.
 //
 //  Open the menu:  VTOL VR / Su-34 ...
@@ -31,7 +38,29 @@ namespace Su34.EditorTools
     {
         // ------------------------------------------------------------------ config
         // Change these if your AssetRipper export uses different paths.
-        public const string DonorPrefabPath = "Assets/Resources/vehicles/FA-26B.prefab";
+        //
+        // DONOR. VTOL VR has three vehicles with a second player slot: the
+        // AH-94 helicopter, the T-55 trainer jet and the EF-24G EW jet. All
+        // three are DLC and all three are tandem. Mods may not reuse their
+        // code, but a mod *can* be built on the vehicle prefab itself - that
+        // is how the AH-6 mod gets two pilots sitting side by side (it
+        // requires the AH-94). The Su-34 needs the same thing, only with
+        // jets, so the builder picks the best two-seat jet it can find and
+        // moves its seat rigs to the Su-34 chairs in AlignCrewSeats().
+        //
+        // Leave the override empty to auto-pick; set a prefab path to force
+        // a specific donor.
+        public const string DonorPrefabOverride = "";
+        public static readonly string[] DonorCandidates =
+        {
+            "EF-24G",   // two-seat EW jet, pilot + WSO   (DLC)
+            "EF24G",    // same prefab, other export naming
+            "T-55",     // two-seat trainer jet           (DLC)
+            "T55",      // same prefab, other export naming
+            "FA-26B",   // single-seat fallback           (base game)
+            "FA26B",
+        };
+
         public const string ModelObjPath = "Assets/Su34/Models/su34.obj";
         public const string OutputPrefabPath = "Assets/Su34/Su34.prefab";
         public const string BundleName = "su34";
@@ -47,30 +76,89 @@ namespace Su34.EditorTools
         // Children whose names contain one of these words are part of the
         // cockpit the player actually interacts with, so they stay visible.
         private static string _resolvedDonor;
+        private static string _activeDonorName = "?";
+        private static int _activeDonorSeats = -1;
 
-        // Fallback: if the default path does not exist, search the project for
-        // the FA-26B prefab. AssetRipper exports vary slightly between
-        // versions, so this removes the most common setup failure.
+        /// <summary>Donor picked by the builder ("EF-24G", "T-55", "FA-26B").</summary>
+        public static string ActiveDonorName
+        {
+            get { var _ = DonorPrefab; return _activeDonorName; }
+        }
+
+        /// <summary>Crew seat rigs the donor actually has (2 = multicrew).</summary>
+        public static int ActiveDonorSeats
+        {
+            get
+            {
+                if (_activeDonorSeats < 0)
+                {
+                    var scratch = new List<string>();
+                    _activeDonorSeats = CountSeatRigs(DonorPrefab, scratch);
+                }
+                return _activeDonorSeats;
+            }
+        }
+
+        // Auto-detect the best donor available in this AssetRipper export.
+        // Direct path first, then exact prefab name, then any vehicle prefab
+        // whose name starts with the candidate (exports vary).
         private static string DonorPrefab
         {
             get
             {
                 if (!string.IsNullOrEmpty(_resolvedDonor)) return _resolvedDonor;
-                if (File.Exists(DonorPrefabPath)) { _resolvedDonor = DonorPrefabPath; return _resolvedDonor; }
-                foreach (var guid in AssetDatabase.FindAssets("FA-26B t:GameObject"))
+
+                if (!string.IsNullOrEmpty(DonorPrefabOverride))
                 {
-                    string path = AssetDatabase.GUIDToAssetPath(guid);
-                    if (path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase) &&
-                        path.IndexOf("vehicle", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (File.Exists(DonorPrefabOverride))
+                        return RememberDonor(DonorPrefabOverride, Path.GetFileNameWithoutExtension(DonorPrefabOverride));
+                    Debug.LogWarning("[Su-34] DonorPrefabOverride not found: " + DonorPrefabOverride +
+                                     " - auto-detecting instead.");
+                }
+
+                foreach (string name in DonorCandidates)
+                {
+                    string direct = "Assets/Resources/vehicles/" + name + ".prefab";
+                    if (File.Exists(direct)) return RememberDonor(direct, name);
+
+                    string[] guids = AssetDatabase.FindAssets(SearchableName(name) + " t:GameObject");
+                    foreach (string guid in guids)
                     {
-                        _resolvedDonor = path;
-                        Debug.Log("[Su-34] donor prefab auto-detected: " + path);
-                        return _resolvedDonor;
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        if (!path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!string.Equals(Path.GetFileNameWithoutExtension(path), name,
+                                           StringComparison.OrdinalIgnoreCase)) continue;
+                        return RememberDonor(path, name);
+                    }
+                    foreach (string guid in guids)
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        if (!path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase)) continue;
+                        if (path.IndexOf("vehicle", StringComparison.OrdinalIgnoreCase) < 0) continue;
+                        return RememberDonor(path, name);
                     }
                 }
-                _resolvedDonor = DonorPrefabPath;
+
+                Debug.LogError("[Su-34] no donor prefab found. Export the game with AssetRipper and make sure " +
+                               "Assets/Resources/vehicles/ exists, or set DonorPrefabOverride.");
+                _resolvedDonor = "Assets/Resources/vehicles/FA-26B.prefab";
+                _activeDonorName = "FA-26B";
                 return _resolvedDonor;
             }
+        }
+
+        private static string RememberDonor(string path, string name)
+        {
+            _resolvedDonor = path;
+            _activeDonorName = name;
+            Debug.Log("[Su-34] donor: " + name + " -> " + path);
+            return _resolvedDonor;
+        }
+
+        private static string SearchableName(string name)
+        {
+            // AssetDatabase search treats some characters as operators.
+            return name.Replace("/", "");
         }
 
         private static readonly string[] KeepVisibleKeywords =
@@ -132,10 +220,27 @@ namespace Su34.EditorTools
         {
             CopyModelAssets();
             bool ok = true;
-            ok &= CheckFile(DonorPrefab, "F/A-26B donor prefab (AssetRipper export of VTOL VR)");
+            ok &= CheckFile(DonorPrefab, ActiveDonorName + " donor prefab (AssetRipper export of VTOL VR)");
             ok &= CheckFile(ModelObjPath, "Su-34 model");
             ok &= CheckFolder(ModelsDir + "/textures", "Su-34 textures");
             ok &= CheckFolder("Assets/Su34", "output folder");
+
+            int seats = ActiveDonorSeats;
+            Debug.Log("[Su-34] donor: " + ActiveDonorName + " (" + DonorPrefab +
+                      "), crew seat rigs: " + seats);
+            if (seats < 2)
+            {
+                Debug.LogWarning("[Su-34] this donor is single-seat. The aircraft will fly, but a second " +
+                                 "player cannot join it: VTOL VR only offers a second player slot when the " +
+                                 "vehicle prefab has two seat rigs. Install the EF-24G or T-55 DLC, " +
+                                 "re-export the game and run the check again for a two-player Su-34.");
+            }
+            else
+            {
+                Debug.Log("[Su-34] two crew seats found: the builder will place them side by side " +
+                          "(pilot left, WSO right).");
+            }
+
             Debug.Log(ok
                 ? "[Su-34] Setup looks good - run '2 - Build prefab + asset bundle'."
                 : "[Su-34] Fix the missing paths above, then run the check again.");
@@ -182,6 +287,7 @@ namespace Su34.EditorTools
             try
             {
                 root.name = PrefabAssetName;
+                report.Add("donor prefab: " + ActiveDonorName + "  (" + DonorPrefab + ")");
 
                 // ------------------------------------------------ vehicle metadata
                 var info = root.GetComponent<ExternalVehicleInfo>();
@@ -193,6 +299,9 @@ namespace Su34.EditorTools
 
                 // ------------------------------------------- hide donor exterior
                 HideDonorExterior(root, report);
+
+                // ---------------------------------------- two crew, side by side
+                AlignCrewSeats(root, report);
 
                 // ------------------------------------------- crew seat anchors
                 AddCrewAnchors(root, report);
@@ -408,16 +517,235 @@ namespace Su34.EditorTools
             }
         }
 
+        // ------------------------------------------------------------- crew seats
+        // VTOL VR gives a vehicle a second player slot when its prefab carries
+        // two seat rigs; the mission editor then offers "1 slot / 2 slots" for
+        // a player spawn, and in single player the seat can be switched like in
+        // the T-55. Every vanilla two-seater (AH-94, T-55, EF-24G) is tandem.
+        // The Su-34 is side by side, so the two donor rigs are moved to our
+        // chairs: front donor seat -> pilot (left), rear donor seat -> WSO
+        // (right). Rig = whatever the donor uses to seat a player: a component
+        // whose type contains "Seat", or a Transform/GameObject field named
+        // like seat / pilot / crew / WSO on the cockpit component.
+        private const bool AlignSeatsSideBySide = true;
+        private static readonly Vector3 PilotSeatAnchor = new Vector3(-0.30f, 1.15f, 6.40f);
+        private static readonly Vector3 WsoSeatAnchor = new Vector3(0.30f, 1.15f, 6.40f);
+
+        // Escape hatch: if auto-detection picks the wrong objects, copy the two
+        // hierarchy paths from Su34_donor_hierarchy.txt here (relative to the
+        // prefab root, e.g. "Cockpit/Seats/PilotSeat").
+        public const string SeatPathPilot = "";
+        public const string SeatPathWso = "";
+
+        private sealed class SeatRig
+        {
+            public Transform transform;
+            public string path;
+            public readonly List<string> sources = new List<string>();
+        }
+
+        private static readonly string[] CrewWords =
+            { "seat", "pilot", "crew", "wso", "ewo", "gunner", "instructor" };
+
+        private static bool IsCrewFieldName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            foreach (string word in CrewWords)
+                if (name.IndexOf(word, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            return false;
+        }
+
+        private static List<SeatRig> FindSeatRigs(GameObject root, List<string> report)
+        {
+            var rigs = new List<SeatRig>();
+            var index = new Dictionary<Transform, SeatRig>();
+
+            Action<Transform, string> add = (t, why) =>
+            {
+                if (t == null) return;
+                SeatRig rig;
+                if (!index.TryGetValue(t, out rig))
+                {
+                    rig = new SeatRig { transform = t, path = GetPath(root.transform, t) };
+                    index[t] = rig;
+                    rigs.Add(rig);
+                }
+                if (!rig.sources.Contains(why)) rig.sources.Add(why);
+            };
+
+            foreach (var c in root.GetComponentsInChildren<Component>(true))
+            {
+                if (c == null) continue;
+                string typeName = c.GetType().Name;
+
+                if (typeName.IndexOf("Seat", StringComparison.OrdinalIgnoreCase) >= 0)
+                    add(c.transform, typeName);
+
+                FieldInfo[] fields;
+                try
+                {
+                    fields = c.GetType().GetFields(
+                        BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                }
+                catch { continue; }
+
+                foreach (var f in fields)
+                {
+                    if (!IsCrewFieldName(f.Name)) continue;
+                    object value;
+                    try { value = f.GetValue(c); } catch { continue; }
+                    if (value == null) continue;
+
+                    Transform t = value as Transform;
+                    if (t == null)
+                    {
+                        var go = value as GameObject;
+                        if (go != null) t = go.transform;
+                    }
+                    if (t != null)
+                    {
+                        add(t, typeName + "." + f.Name);
+                        continue;
+                    }
+
+                    // Cockpits often keep the seats in an array or a list.
+                    var list = value as System.Collections.IEnumerable;
+                    if (list == null || value is string) continue;
+                    int index = 0;
+                    foreach (object item in list)
+                    {
+                        Transform it = item as Transform;
+                        if (it == null)
+                        {
+                            var go = item as GameObject;
+                            if (go != null) it = go.transform;
+                        }
+                        if (it != null) add(it, typeName + "." + f.Name + "[" + index + "]");
+                        index++;
+                    }
+                }
+            }
+
+            // A rig nested inside another rig would get the offset twice.
+            var filtered = new List<SeatRig>();
+            foreach (var rig in rigs)
+            {
+                bool nested = rigs.Any(other => other != rig && rig.transform.IsChildOf(other.transform));
+                if (nested)
+                {
+                    report.Add("seat rig ignored (child of another rig): " + rig.path);
+                    continue;
+                }
+                filtered.Add(rig);
+            }
+
+            // Nose first: the forward seat becomes the pilot, the rear one the WSO.
+            filtered.Sort((a, b) =>
+            {
+                float za = root.transform.InverseTransformPoint(a.transform.position).z;
+                float zb = root.transform.InverseTransformPoint(b.transform.position).z;
+                return zb.CompareTo(za);
+            });
+            return filtered;
+        }
+
+        private static int CountSeatRigs(string prefabPath, List<string> report)
+        {
+            if (string.IsNullOrEmpty(prefabPath) || !File.Exists(prefabPath)) return 0;
+            GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                return FindSeatRigs(root, report).Count;
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        private static void AlignCrewSeats(GameObject root, List<string> report)
+        {
+            List<SeatRig> rigs;
+
+            // Explicit paths win over auto-detection.
+            if (!string.IsNullOrEmpty(SeatPathPilot) && !string.IsNullOrEmpty(SeatPathWso))
+            {
+                Transform p = root.transform.Find(SeatPathPilot);
+                Transform w = root.transform.Find(SeatPathWso);
+                if (p != null && w != null)
+                {
+                    rigs = new List<SeatRig>
+                    {
+                        new SeatRig { transform = p, path = SeatPathPilot },
+                        new SeatRig { transform = w, path = SeatPathWso },
+                    };
+                    report.Add("crew seats taken from SeatPathPilot / SeatPathWso");
+                }
+                else
+                {
+                    report.Add("WARNING: SeatPathPilot / SeatPathWso not found at " +
+                               SeatPathPilot + " / " + SeatPathWso + " - falling back to auto-detection");
+                    rigs = FindSeatRigs(root, report);
+                }
+            }
+            else
+            {
+                rigs = FindSeatRigs(root, report);
+            }
+
+            report.Add("crew seat rigs found: " + rigs.Count);
+            foreach (var rig in rigs)
+                report.Add("   " + rig.path + "   [" + string.Join(", ", rig.sources.ToArray()) + "]");
+
+            if (rigs.Count == 0)
+            {
+                report.Add("WARNING: no seat rig found on this donor - the game will treat the aircraft as " +
+                           "single-seat. Use the EF-24G or T-55 donor.");
+                Debug.LogWarning("[Su-34] no seat rig found on the donor prefab");
+                return;
+            }
+
+            if (!AlignSeatsSideBySide)
+            {
+                report.Add("seat alignment disabled - donor seating kept");
+                return;
+            }
+
+            Vector3[] anchors = { PilotSeatAnchor, WsoSeatAnchor };
+            int moves = Mathf.Min(rigs.Count, anchors.Length);
+            for (int i = 0; i < moves; i++)
+            {
+                Transform t = rigs[i].transform;
+                Vector3 before = root.transform.InverseTransformPoint(t.position);
+                t.position = root.transform.TransformPoint(anchors[i]);
+                Vector3 after = root.transform.InverseTransformPoint(t.position);
+                string line = string.Format(
+                    "{0} -> ({1:0.00}, {2:0.00}, {3:0.00})  was ({4:0.00}, {5:0.00}, {6:0.00})",
+                    rigs[i].path, after.x, after.y, after.z, before.x, before.y, before.z);
+                report.Add("seat moved: " + line);
+                Debug.Log("[Su-34] seat moved: " + line);
+            }
+
+            if (moves < 2)
+            {
+                report.Add("WARNING: only one crew seat on this donor - the second player cannot join. " +
+                           "Install the EF-24G or T-55 DLC and re-export the game.");
+                Debug.LogWarning("[Su-34] donor is single-seat: two-player crew will not work");
+            }
+            else
+            {
+                report.Add("two crew seats aligned side by side: pilot left, WSO right");
+            }
+        }
+
         // The Su-34 cockpit is side-by-side: pilot on the left, weapons systems
         // officer on the right, exactly as in the real aircraft. The model in
-        // this repository already contains that interior (SU-34_Seat*, panel,
+        // this repository already contains that interior (Su34_Seat*, panel,
         // MFDs, HUD, consoles), so the external view is correct.
         //
-        // These two empty transforms mark where the crew sits. They are useful
-        // for cameras, mission logic generators and for a future custom
-        // cockpit. NOTE: VTOL VR itself still flies a single player per
-        // vehicle; a second live player in the right-hand seat needs a custom
-        // interactable cockpit, which this mod does not have yet.
+        // These two empty transforms are our own markers: cameras, mission
+        // logic and a future fully custom interactive cockpit can use them.
+        // The actual player seats are the donor rigs moved by AlignCrewSeats().
         private static void AddCrewAnchors(GameObject root, List<string> report)
         {
             // Values match tools/su34_model/generate_su34.py: seats at x = +-0.30,
