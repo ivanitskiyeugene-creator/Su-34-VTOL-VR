@@ -48,6 +48,13 @@ The mod writes to the game's Output.log with the prefix [Su-34]. Check:
 
 Press F10 in flight for an on-screen diagnostic overlay.
 
+Credits
+-------
+Exterior mesh: see the Workshop description and docs/АТРИБУЦИЯ.md in the source
+repository. If the airframe was extracted from a Workshop NPC pack, the author
+of that pack is credited here, in the in-game vehicle description and in the
+Workshop page.
+
 This package contains no VTOL VR game files. The 3D model was generated from
 scratch by the tools in the source repository (MIT licence). The flight model,
 cockpit interactables and seat rigs come from the VTOL VR vehicle the package

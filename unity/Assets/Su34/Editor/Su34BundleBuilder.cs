@@ -67,9 +67,27 @@ namespace Su34.EditorTools
         public const string PrefabAssetName = "Su34";
         public const string VehicleName = "Su-34";
         public const string VehicleNickname = "Fullback";
+        // Credit for the airframe the exterior mesh was taken from. Leave the
+        // author empty while the model is still procedural; fill it in before
+        // publishing to the Workshop (docs/АТРИБУЦИЯ.md has the full list).
+        public const string MeshCreditAuthor = "";
+        public const string MeshCreditMod = "";
+
         public const string VehicleDescription =
             "Twin-seat, twin-engine supersonic strike fighter. Heavy payload, long range, " +
             "side-by-side cockpit. Built for the VTOL VR Mod Loader.";
+
+        /// <summary>Description with the mesh credit appended when one is set.</summary>
+        public static string FullDescription
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(MeshCreditAuthor)) return VehicleDescription;
+                string credit = " Exterior mesh from \"" + (string.IsNullOrEmpty(MeshCreditMod) ? "a workshop add-on" : MeshCreditMod) +
+                                "\" by " + MeshCreditAuthor + " (VTOL VR Workshop), used with the author's permission.";
+                return VehicleDescription + credit;
+            }
+        }
 
         private const string BundleOutputDir = "AssetBundles";
 
@@ -418,7 +436,7 @@ namespace Su34.EditorTools
             var so = new SerializedObject(info);
             bool okName = SetString(so, new[] { "vehicleName", "name", "displayName", "vehicleTitle" },
                 VehicleName, report);
-            SetString(so, new[] { "description", "desc", "vehicleDescription" }, VehicleDescription, report);
+            SetString(so, new[] { "description", "desc", "vehicleDescription" }, FullDescription, report);
             SetString(so, new[] { "nickname", "shortName", "callsign" }, VehicleNickname, report);
             so.ApplyModifiedPropertiesWithoutUndo();
 
@@ -429,6 +447,9 @@ namespace Su34.EditorTools
             EditorUtility.SetDirty(info);
             report.Add("ExternalVehicleInfo: " + VehicleName + " / " + VehicleNickname +
                        (okName ? "" : "  <-- vehicleName field not found, see field dump below"));
+            report.Add(string.IsNullOrEmpty(MeshCreditAuthor)
+                ? "mesh credit: none set (procedural mesh or credit missing - fill MeshCreditAuthor before publishing)"
+                : "mesh credit: " + MeshCreditMod + " by " + MeshCreditAuthor);
 
             // Dump the real field names so a mismatch is visible instead of
             // silently producing an unselectable aircraft.
