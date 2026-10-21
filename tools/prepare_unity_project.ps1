@@ -1,4 +1,4 @@
-﻿<#
+﻿﻿<#
     prepare_unity_project.ps1 - собирает Unity-проект для мода Су-34 из
     выгрузки AssetRipper и файлов этого репозитория.
 
@@ -197,7 +197,7 @@ if (-not (Test-Path (Join-Path $repoModel $ModelFile))) {
 Copy-Item (Join-Path $repoModel $ModelFile) $modelDir -Force
 $mtl = [System.IO.Path]::ChangeExtension($ModelFile, ".mtl")
 Copy-Item (Join-Path $repoModel $mtl) $modelDir -Force
-Copy-Item (Join-Path $repoModel "textures\*.png") $texDir -Force
+Copy-Item (Join-Path $repoModel "textures\donor_*.png") $texDir -Force
 $pngCount = (Get-ChildItem $texDir -Filter *.png).Count
 Info ("модель:    $ModelFile + $mtl + $pngCount текстур")
 

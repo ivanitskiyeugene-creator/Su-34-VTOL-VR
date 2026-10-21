@@ -283,12 +283,19 @@ namespace Su34.EditorTools
                 File.Copy(file, Path.Combine(ModelsDir, name), true);
                 copied++;
             }
+            // Copy only the maps the material library actually points at: the
+            // textures folder also holds the old procedural set, and importing
+            // thirteen unused 1K images into every project just slows Unity down.
             string texSource = Path.Combine(source, "textures");
-            if (Directory.Exists(texSource))
+            string wantMtlPath = Path.Combine(ModelsDir, wantMtl);
+            if (Directory.Exists(texSource) && File.Exists(wantMtlPath))
             {
-                foreach (string file in Directory.GetFiles(texSource))
+                var wanted = new List<string>(ReferencedTextures(File.ReadAllLines(wantMtlPath)));
+                wanted.AddRange(Su34Materials.ExtraTextures);   // packed metallic/smoothness
+                foreach (string name in wanted)
                 {
-                    if (Path.GetExtension(file).ToLowerInvariant() != ".png") continue;
+                    string file = Path.Combine(texSource, Path.GetFileName(name));
+                    if (!File.Exists(file)) continue;
                     File.Copy(file, Path.Combine(ModelsDir, "textures", Path.GetFileName(file)), true);
                     copied++;
                 }
@@ -310,6 +317,19 @@ namespace Su34.EditorTools
             if (report != null) report.Add("ERROR: " + msg);
             Debug.LogError("[Su-34] " + msg);
             return false;
+        }
+
+        /// <summary>Texture files named by map_Kd / map_Ks / norm / bump / map_d.</summary>
+        private static IEnumerable<string> ReferencedTextures(IEnumerable<string> mtlLines)
+        {
+            string[] keys = { "map_Kd", "map_Ks", "map_Ka", "norm", "bump", "map_bump", "map_d" };
+            foreach (string raw in mtlLines)
+            {
+                string[] p = raw.Trim().Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                if (p.Length < 2) continue;
+                if (Array.IndexOf(keys, p[0]) < 0) continue;
+                yield return p[p.Length - 1].Replace('\\', '/');
+            }
         }
 
         [MenuItem("VTOL VR/Su-34/0b - Check setup", priority = 1)]
@@ -591,32 +611,7 @@ namespace Su34.EditorTools
             report.Add("visual model attached: " + meshes + " renderers");
             Debug.Log("[Su-34] attached model with " + meshes + " renderers");
 
-            MakeGlassTransparent(visual, report);
-        }
-
-        /// <summary>
-        /// Unity's OBJ importer keeps the MTL alpha but leaves the material
-        /// opaque. The canopy is authored with alpha 0.30, so switch those
-        /// materials to the transparent rendering mode.
-        /// </summary>
-        private static void MakeGlassTransparent(GameObject visual, List<string> report)
-        {
-            foreach (var r in visual.GetComponentsInChildren<Renderer>(true))
-            {
-                foreach (var mat in r.sharedMaterials)
-                {
-                    if (mat == null) continue;
-                    if (mat.name.IndexOf("Glass", StringComparison.OrdinalIgnoreCase) < 0) continue;
-                    mat.SetFloat("_Mode", 3f); // Standard shader: Transparent
-                    mat.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                    mat.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                    mat.SetInt("_ZWrite", 0);
-                    mat.DisableKeyword("_ALPHATEST_ON");
-                    mat.EnableKeyword("_ALPHABLEND_ON");
-                    mat.renderQueue = 3000;
-                    report.Add("glass material made transparent: " + mat.name);
-                }
-            }
+            Su34Materials.Apply(visual, report);
         }
 
         // ------------------------------------------------------------- crew seats

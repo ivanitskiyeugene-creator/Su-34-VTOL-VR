@@ -17,6 +17,39 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "assets", "import", "su34_donor", "source", "Su-34.glb")
 OUT_DIR = os.path.join(ROOT, "assets", "import", "su34_donor", "obj")
 
+# The GLB carries four materials: the painted airframe with the PBR set, plain
+# glass for the canopy and the instrument covers, the green HUD combiner and the
+# landing lights. Keeping them apart is what lets Unity make the glass actually
+# transparent and the lamps actually glow - merging everything into one
+# material (as the first import did) gives an opaque canopy.
+MATERIAL_NAMES = {
+    0: "Su34_Airframe",
+    1: "Su34_Glass",
+    2: "Su34_HUD",
+    3: "Su34_Lights",
+}
+
+MTL_BODY = """newmtl {name}
+Ka 0 0 0
+Kd {kd}
+Ks {ks}
+Ns {ns}
+d {d}
+illum {illum}
+{extra}"""
+
+MTL_ENTRIES = [
+    ("Su34_Airframe", "1.0 1.0 1.0", "0.12 0.12 0.12", 24, 1.0, 2,
+     "map_Kd textures/donor_basecolor.png\n"
+     "map_Ks textures/donor_roughness.png\n"
+     "norm textures/donor_normal.png\n"),
+    ("Su34_Glass", "0.62 0.72 0.78", "0.90 0.90 0.90", 200, 0.32, 4, ""),
+    ("Su34_HUD", "0.00 0.80 0.01", "0.20 0.20 0.20", 120, 0.55, 4,
+     "Ke 0.00 0.80 0.01\n"),
+    ("Su34_Lights", "1.0 1.0 1.0", "0.10 0.10 0.10", 10, 1.0, 5,
+     "Ke 1.0 1.0 1.0\n"),
+]
+
 CTYPE = {5120: ("b", 1), 5121: ("B", 1), 5122: ("h", 2), 5123: ("H", 2),
          5125: ("I", 4), 5126: ("f", 4)}
 NCOMP = {"SCALAR": 1, "VEC2": 2, "VEC3": 3, "VEC4": 4}
@@ -84,9 +117,10 @@ def main():
             m[:3, :3] = m[:3, :3] @ np.diag(s)
 
         body.append(f"o {name}")
-        body.append("usemtl Su34_Donor")
         cnt = 0
         for pr in mesh["primitives"]:
+            mat_name = MATERIAL_NAMES.get(pr.get("material", 0), "Su34_Airframe")
+            body.append("usemtl " + mat_name)
             pos = accessor(js, bin_, pr["attributes"]["POSITION"])
             pos = pos @ m[:3, :3].T + m[:3, 3]
             nrm = None
@@ -123,10 +157,11 @@ def main():
         stats.append((name, cnt, np.array(pos).min(0), np.array(pos).max(0)))
 
     with open(mtl_path, "w") as f:
-        f.write("newmtl Su34_Donor\nKa 0 0 0\nKd 1 1 1\nKs 0.1 0.1 0.1\n"
-                "Ns 20\nd 1\nillum 2\nmap_Kd ../textures/BaseColor_1.png\n"
-                "map_Ks ../textures/Metallic-Roughness_2@channels=G.png\n"
-                "norm ../textures/Normal_0.png\n")
+        f.write("# Su-34 donor materials - see tools/import_donor.py\n")
+        for name, kd, ks, ns, alpha, illum, extra in MTL_ENTRIES:
+            f.write(MTL_BODY.format(name=name, kd=kd, ks=ks, ns=ns,
+                                    d=alpha, illum=illum, extra=extra))
+            f.write("\n")
 
     with open(obj_path, "w") as f:
         f.write("# Su-34 donor model, converted from GLB\n")

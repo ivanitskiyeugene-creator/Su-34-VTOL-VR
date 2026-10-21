@@ -1,10 +1,38 @@
-newmtl Su34_Donor
-Ka 0.0 0.0 0.0
+# Su-34 donor materials - see tools/import_donor.py
+newmtl Su34_Airframe
+Ka 0 0 0
 Kd 1.0 1.0 1.0
-Ks 0.10 0.10 0.10
-Ns 20.0
+Ks 0.12 0.12 0.12
+Ns 24
 d 1.0
 illum 2
 map_Kd textures/donor_basecolor.png
 map_Ks textures/donor_roughness.png
 norm textures/donor_normal.png
+
+newmtl Su34_Glass
+Ka 0 0 0
+Kd 0.62 0.72 0.78
+Ks 0.90 0.90 0.90
+Ns 200
+d 0.32
+illum 4
+
+newmtl Su34_HUD
+Ka 0 0 0
+Kd 0.00 0.80 0.01
+Ks 0.20 0.20 0.20
+Ns 120
+d 0.55
+illum 4
+Ke 0.00 0.80 0.01
+
+newmtl Su34_Lights
+Ka 0 0 0
+Kd 1.0 1.0 1.0
+Ks 0.10 0.10 0.10
+Ns 10
+d 1.0
+illum 5
+Ke 1.0 1.0 1.0
+

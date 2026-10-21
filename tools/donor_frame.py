@@ -1,8 +1,13 @@
 """Rewrite the donor OBJ into the frame the rest of the pipeline uses.
 
-Donor: +x = nose, +y = up, +z = starboard.  Ours: +z = nose, +x = starboard,
-+y = up.  The airframe is shifted so the radome tip lands on z = +11.62 like
-the traced model; the span is left as delivered (14.74 m).
+Donor (glTF, right-handed): +x = nose, +y = up, +z = starboard.
+Ours (Unity, left-handed): +z = nose, +x = starboard, +y = up.
+
+Swapping two axes is a mirror, so the triangle winding has to be reversed to
+keep it agreeing with the normals - without that the model renders inside-out
+in Unity (single-sided materials cull the outside). The airframe is shifted so
+the radome tip lands on z = +11.62 like the traced model; the span is left as
+delivered (14.74 m).
 """
 import os
 
@@ -26,6 +31,10 @@ def main():
                 x, y, z = (float(q) for q in p[1:4])
                 out.append("v %.5f %.5f %.5f" % (z * SCALE, (y + YOFF) * SCALE,
                                                  x * SCALE - OFFSET))
+            elif p[0] == "f":
+                # reverse the winding: the axis swap above is a reflection
+                verts = p[1:]
+                out.append("f " + " ".join(reversed(verts)))
             elif p[0] == "o":
                 name = p[1]
                 if name.startswith("Su-34-landing"):
