@@ -44,26 +44,28 @@ MATERIALS = {
                        "shininess": 22, "map": TEX + "su34_camo.png"},
     "Su34_CamoDark":  {"color": (0.506, 0.576, 0.620), "specular": (0.12, 0.13, 0.14),
                        "shininess": 22, "map": TEX + "su34_camo_dark.png"},
-    "Su34_Underside": {"color": (0.620, 0.675, 0.710), "specular": (0.10, 0.11, 0.11),
+    "Su34_Underside": {"color": (0.520, 0.573, 0.608), "specular": (0.10, 0.11, 0.11),
                        "shininess": 16, "map": TEX + "su34_underside.png"},
-    "Su34_Radome":    {"color": (0.804, 0.816, 0.824), "specular": (0.06, 0.06, 0.06),
+    "Su34_Radome":    {"color": (0.660, 0.678, 0.690), "specular": (0.06, 0.06, 0.06),
                        "shininess": 10, "map": TEX + "su34_radome.png"},
-    "Su34_Glass":     {"color": (0.56, 0.70, 0.78), "specular": (0.95, 1.00, 1.00),
-                       "shininess": 180, "alpha": 0.42},
+    "Su34_Glass":     {"color": (0.62, 0.75, 0.81), "specular": (0.95, 1.00, 1.00),
+                       "shininess": 180, "alpha": 0.38},
     "Su34_Frame":     {"color": (0.188, 0.204, 0.220), "specular": (0.30, 0.30, 0.32),
                        "shininess": 60, "map": TEX + "su34_frame.png"},
     "Su34_Metal":     {"color": (0.502, 0.518, 0.533), "specular": (0.78, 0.78, 0.80),
                        "shininess": 120, "map": TEX + "su34_metal.png"},
-    "Su34_Nozzle":    {"color": (0.34, 0.34, 0.35), "specular": (0.85, 0.82, 0.78),
-                       "shininess": 150, "map": TEX + "su34_nozzle.png"},
+    "Su34_NozzleHot": {"color": (0.300, 0.290, 0.296), "specular": (0.30, 0.29, 0.30),
+                       "shininess": 70},
+    "Su34_Nozzle":    {"color": (0.286, 0.284, 0.290), "specular": (0.32, 0.31, 0.30),
+                       "shininess": 150},
     "Su34_Intake":    {"color": (0.10, 0.11, 0.12), "specular": (0.02, 0.02, 0.02),
                        "shininess": 6, "map": TEX + "su34_intake.png"},
     "Su34_Gear":      {"color": (0.408, 0.431, 0.416), "specular": (0.22, 0.22, 0.22),
                        "shininess": 34, "map": TEX + "su34_gear.png"},
     "Su34_Tire":      {"color": (0.086, 0.090, 0.094), "specular": (0.03, 0.03, 0.03),
                        "shininess": 8},
-    "Su34_Cockpit":   {"color": (0.235, 0.259, 0.278), "specular": (0.04, 0.04, 0.04),
-                       "shininess": 8, "map": TEX + "su34_cockpit.png"},
+    "Su34_Cockpit":   {"color": (0.300, 0.322, 0.310), "specular": (0.06, 0.06, 0.06),
+                       "shininess": 10},
     "Su34_Star":      {"color": (0.70, 0.14, 0.12), "specular": (0.15, 0.08, 0.08),
                        "shininess": 20, "map": TEX + "su34_star.png",
                        "map_alpha": TEX + "su34_star.png"},
@@ -78,6 +80,16 @@ MATERIALS = {
                        "shininess": 160, "alpha": 0.22},
     "Su34_Cushion":   {"color": (0.180, 0.190, 0.175), "specular": (0.05, 0.05, 0.05),
                        "shininess": 6},
+    "Su34_Cabin":     {"color": (0.468, 0.492, 0.474), "specular": (0.06, 0.06, 0.06),
+                       "shininess": 10},
+    "Su34_Tread":     {"color": (0.286, 0.300, 0.290), "specular": (0.10, 0.10, 0.10),
+                       "shininess": 18},
+    "Su34_Webbing":   {"color": (0.230, 0.215, 0.180), "specular": (0.03, 0.03, 0.03),
+                       "shininess": 4},
+    "Su34_Caution":   {"color": (0.620, 0.520, 0.140), "specular": (0.20, 0.18, 0.10),
+                       "shininess": 30},
+    "Su34_CanopyFrame": {"color": (0.545, 0.600, 0.630), "specular": (0.28, 0.30, 0.32),
+                       "shininess": 45, "map": TEX + "su34_camo_dark.png"},
 }
 
 # ------------------------------------------------------------------ dimensions
@@ -89,19 +101,19 @@ GROUND_Y = -1.32        # wheel contact plane (y = 0 is the belly)
 #: swallows the hull on the top view, so the flare there is interpolated and
 #: covered by the wing root fairing.
 HALF_WIDTH = [
-    (11.62, 0.09), (11.30, 0.42), (10.30, 0.81), (8.50, 0.95), (6.40, 0.97),
-    (3.90, 1.02), (2.50, 1.06), (1.00, 1.10), (0.00, 1.12), (-1.50, 1.14),
-    (-3.00, 1.16), (-4.50, 1.16), (-5.60, 1.15), (-6.60, 1.12), (-7.60, 1.06),
-    (-8.30, 0.98), (-8.60, 0.88), (-8.95, 0.74), (-9.20, 0.63), (-9.60, 0.52),
-    (-9.95, 0.47), (-10.60, 0.45), (-11.30, 0.36), (-11.62, 0.06),
+    (11.62, 0.08), (11.30, 0.39), (10.30, 0.76), (8.50, 0.89), (6.40, 0.91),
+    (3.90, 0.96), (2.50, 1.00), (1.00, 1.06), (0.00, 1.18), (-1.50, 1.52),
+    (-3.00, 1.88), (-4.50, 2.03), (-5.60, 2.07), (-6.60, 2.05), (-7.60, 1.98),
+    (-8.30, 1.80), (-8.60, 1.42), (-8.95, 0.98), (-9.20, 0.74), (-9.60, 0.56),
+    (-9.95, 0.47), (-10.60, 0.43), (-11.30, 0.34), (-11.62, 0.06),
 ]
 
 #: fuselage keel (m).  The traced side outline is the *nacelle* underside, so
 #: the hull itself rides ~0.3 m above the lowest point of the aircraft.
 KEEL = [
     (11.62, 0.44), (10.60, 0.42), (9.00, 0.42), (7.00, 0.66), (5.00, 0.86),
-    (3.00, 0.96), (2.00, 0.82), (1.00, 0.70), (-1.50, 0.62), (-4.00, 0.62),
-    (-6.50, 0.62), (-8.30, 0.64), (-9.20, 0.90), (-10.00, 1.06), (-11.00, 1.16),
+    (3.00, 0.96), (2.00, 0.82), (1.00, 0.72), (-1.50, 0.80), (-4.00, 0.88),
+    (-6.50, 0.90), (-8.30, 0.92), (-9.20, 1.00), (-10.00, 1.10), (-11.00, 1.18),
     (-11.62, 1.26),
 ]
 
@@ -117,23 +129,23 @@ TOP_LINE = [
 ]
 
 COCKPIT_Z0, COCKPIT_Z1 = 4.25, 7.25      # canopy opening, rear .. front
-CANOPY_HALF_WIDTH = 1.02
+CANOPY_HALF_WIDTH = 0.98
 
 # ------------------------------------------------------------------- planforms
 # The numbers below are read off the traced outline of docs/refs/bp-1 (see
 # tools/su34_model/blueprint_data.py): wing LE 43.1 deg, wing TE 7.8 deg,
 # canard LE 52.7 deg, stabilator LE 46.1 deg.
-WING = dict(root_x=0.60, tip_x=7.12, le_root=1.685, le_slope=0.935,
-            te_root=-5.009, te_slope=0.1371, y_root=1.52, y_tip=1.20,
-            thickness=(0.062, 0.050))
+WING = dict(root_x=0.60, tip_x=7.22, le_root=1.685, le_slope=0.935,
+            te_root=-5.009, te_slope=0.1371, y_root=1.42, y_tip=1.28,
+            thickness=(0.077, 0.052))
 CANARD = dict(root_x=0.95, tip_x=3.09, le_root=3.92, le_tip=1.98,
-              te_root=1.64, te_tip=1.29, y=1.44, thickness=0.050)
-STAB = dict(root_x=0.90, tip_x=4.80, le_root=-4.72, le_tip=-7.86,
-            te_root=-8.55, te_tip=-8.72, y=0.68, thickness=0.048)
-FIN = dict(root_x=2.04, tip_x=2.18, y_root=1.20, y_tip=4.80,
-           le_root=-2.30, le_tip=-5.90, te_root=-7.35, te_tip=-6.95,
+              te_root=1.64, te_tip=1.29, y=1.36, thickness=0.050)
+STAB = dict(root_x=0.90, tip_x=4.76, le_root=-4.72, le_tip=-7.86,
+            te_root=-8.55, te_tip=-8.72, y=0.76, thickness=0.042)
+FIN = dict(root_x=2.00, tip_x=2.14, y_root=1.52, y_tip=4.80,
+           le_root=-2.30, le_tip=-5.88, te_root=-7.35, te_tip=-6.72,
            thickness=0.045)
-TIP_POD = dict(x=7.28, y=1.24, z_front=-2.25, z_back=-5.78, r=0.07)
+TIP_POD = dict(x=7.32, y=1.20, z_front=-2.25, z_back=-5.78, r=0.062)
 
 
 def interp(table, z):
@@ -151,17 +163,42 @@ def interp(table, z):
 
 
 def hull_exponent(z: float) -> float:
-    """2.2 at the radome, 2.9 on the wide flat aft body."""
-    t = np.clip((11.0 - z) / 13.0, 0.0, 1.0)
-    return 2.2 + 0.75 * float(t)
+    """2.1 at the radome, 4.3 on the slab-sided mid body.
+
+    High exponents give the flat deck and vertical sides the Su-34 has; a
+    round exponent turns the fuselage into a tube.
+    """
+    if z > 11.30:                       # rounded radome tip
+        return 2.4
+    if z > 8.20:                        # flat-topped duckbill nose
+        return 3.1
+    if z > 6.00:                        # cockpit barrel
+        return 2.9
+    t = float(np.clip((6.0 - z) / 6.0, 0.0, 1.0))
+    n = 2.9 + 1.4 * t
+    if z < -8.0:
+        n = max(3.2, n - (-8.0 - z) * 0.10)
+    return n
 
 
 # ------------------------------------------------------------------- surfaces
-def shoulder(y: float) -> float:
-    """Head-on drawing: the hull is wide at the wing shoulder and pinches in
-    above it, so the canopy sits on a narrow spine instead of a barrel."""
-    t = min(max((y - 1.30) / 1.05, 0.0), 1.0)
-    return 1.0 - 0.20 * t * t * (3.0 - 2.0 * t)
+SHOULDER_GAIN = 0.55          # depth of the deck edge over the engine bay
+SHOULDER_ONSET = 1.42
+SHOULDER_DEPTH = 0.56
+
+
+def shoulder_gain(z: float) -> float:
+    """The hard deck edge only exists over the engine bay; the cockpit barrel
+    and the nose stay round so the canopy still sits on skin."""
+    t = min(max((1.0 - z) / 3.0, 0.0), 1.0)
+    return 0.10 + (SHOULDER_GAIN - 0.10) * t * t * (3.0 - 2.0 * t)
+
+
+def shoulder(y: float, z: float = -4.0) -> float:
+    """Head-on drawing: the hull is 2.2 m wide just under the deck edge and
+    only 1.39 m wide 0.2 m higher, so the top corners roll over hard."""
+    t = min(max((y - SHOULDER_ONSET) / SHOULDER_DEPTH, 0.0), 1.0)
+    return 1.0 - shoulder_gain(z) * t ** 0.7
 
 
 def section_ring(z, hw, top, bot, n, count=56):
@@ -173,7 +210,7 @@ def section_ring(z, hw, top, bot, n, count=56):
         ct, st = math.cos(t), math.sin(t)
         x = hw * math.copysign(abs(ct) ** (2.0 / n), ct)
         y = cy + hh * math.copysign(abs(st) ** (2.0 / n), st)
-        pts.append(v(x * shoulder(y), y, z))
+        pts.append(v(x * shoulder(y, z), y, z))
     return pts
 
 
@@ -194,13 +231,19 @@ def station_at(z: float):
 
 
 def skin_top_y(z: float, x: float) -> float:
+    """Height of the hull skin above ``x``: inverts the superellipse *and* the
+    station's shoulder, which shrinks the section as it rises."""
     hw, top, bot, n = station_at(z)
     cy = (top + bot) / 2.0
     hh = (top - bot) / 2.0
     t = min(abs(x) / max(hw, 1e-6), 1.0)
-    cos_t = t ** (n / 2.0)
-    sin_t = math.sqrt(max(1.0 - cos_t * cos_t, 0.0))
-    return cy + hh * (sin_t ** (2.0 / n))
+    y = top
+    for _ in range(10):
+        s = max(1e-3, shoulder(y, z))
+        cos_t = min(t / s, 1.0) ** (n / 2.0)
+        sin_t = math.sqrt(max(1.0 - cos_t * cos_t, 0.0))
+        y = cy + hh * (sin_t ** (2.0 / n))
+    return y
 
 
 def sill_y(z: float) -> float:
@@ -232,7 +275,7 @@ def build_fuselage(mesh: Mesh) -> None:
     body = [r for r, s in zip(rings, STATIONS) if s[0] <= 9.60]
     radome = [r for r, s in zip(rings, STATIONS) if s[0] >= 9.50]
 
-    p = mesh.loft("Su34_Radome", "Su34_Radome", radome, cap_start=True,
+    p = mesh.loft("Su34_Radome", "Su34_Camo", radome, cap_start=True,
                   cap_end=False)
     mesh.orient(p, lambda c: v(0, 0.8, c[2]))
     start = [i for i, s in enumerate(STATIONS) if s[0] <= 9.60][0]
@@ -265,95 +308,309 @@ CANOPY_SECTIONS = [
     (4.80, 2.92), (4.30, 2.92), (3.80, 2.88),
 ]
 
+CANOPY_Z0, CANOPY_Z1 = 3.86, 7.34     # opening, rear .. front
+WS_ARCH_Z = 6.94                      # windscreen / moving canopy joint
+
 
 def canopy_crown(z: float) -> float:
     return interp(CANOPY_SECTIONS, z)
 
 
-def canopy_ring(z: float, crown: float, n: int = 26, scale: float = 1.0):
+def canopy_ring(z, crown, n: int = 26, scale: float = 1.0, lift: float = 0.0):
     base = sill_y(z)
     hw = CANOPY_HALF_WIDTH * scale
     ring = []
     for k in range(n + 1):
         t = math.pi * k / n
-        y = base + (crown - base) * max(0.0, math.sin(t)) ** 1.50
-        ring.append(v(hw * math.cos(t), y, z))
+        y = base + (crown - base) * max(0.0, math.sin(t)) ** 1.35
+        ring.append(v(hw * math.cos(t), y + lift, z))
     return ring
 
 
+def sill_curve(z: float, n: int = 12, lift: float = 0.006):
+    """The fuselage skin line across the cockpit opening at station ``z``."""
+    pts = []
+    for k in range(n + 1):
+        x = -CANOPY_HALF_WIDTH + 2.0 * CANOPY_HALF_WIDTH * k / n
+        pts.append(v(x, skin_top_y(z, x) + lift, z))
+    return pts
+
+
 def build_canopy(mesh: Mesh) -> None:
-    zs = [3.80, 4.30, 4.80, 5.30, 5.80, 6.30, 6.85, 7.35]
-    rings = [canopy_ring(z, canopy_crown(z)) for z in zs]
-    p = mesh.loft("Su34_Canopy", "Su34_Glass", rings, closed_ring=False)
+    """Fixed windscreen + rear-hinged clamshell canopy on a framed sill.
+
+    The glass is only the glazing: every edge carries a frame band, and the
+    hull below the sill stays camouflage, so the cockpit never reads as a
+    transparent bubble dropped on the nose.
+    """
+    # --- glazing
+    zs = [CANOPY_Z0, 4.30, 4.80, 5.30, 5.80, 6.30, 6.62, WS_ARCH_Z]
+    p = mesh.loft("Su34_CanopyGlass", "Su34_Glass",
+                  [canopy_ring(z, canopy_crown(z)) for z in zs],
+                  closed_ring=False)
     mesh.orient(p, lambda c: v(0, sill_y(c[2]) - 0.2, c[2]))
 
-    # frames: windscreen bow, canopy hinge and the rear arch
-    for z, rad in ((3.83, 0.05), (7.32, 0.05)):
-        r = canopy_ring(z, canopy_crown(z), 26, 1.004)
-        for k in range(len(r) - 1):
-            a, b = r[k], r[k + 1]
-            mesh.cylinder("Su34_CanopyFrame", "Su34_Frame",
-                          (a + b) / 2.0 - v(0, 0.012, 0.03),
-                          (a + b) / 2.0 - v(0, 0.012, -0.03),
-                          rad * 0.5, rad * 0.5, segments=6, caps=False)
-    # centre rail
-    rail = [v(0.0, canopy_crown(z) + 0.012, z) for z in (3.83, 4.6, 5.4, 6.2, 7.0, 7.33)]
-    for a, b in zip(rail, rail[1:]):
-        mesh.cylinder("Su34_CanopyRail", "Su34_Frame", a, b, 0.028, 0.028,
-                      segments=6, caps=False)
-    # rear fairing: blends the canopy into the spine
-    fair = [canopy_ring(z, canopy_crown(3.80) - 0.10, 26, 0.99 * k)
-            for z, k in ((3.80, 1.0), (3.60, 0.80), (3.45, 0.55))]
+    p = mesh.loft("Su34_Windscreen", "Su34_Glass",
+                  [canopy_ring(z, canopy_crown(z)) for z in (CANOPY_Z1, 7.15, WS_ARCH_Z)],
+                  closed_ring=False)
+    mesh.orient(p, lambda c: v(0, sill_y(c[2]) - 0.2, c[2]))
+
+    # --- frames (flat bands, 5-7 cm wide)
+    def arch(z: float, name: str, width: float = 0.036) -> None:
+        arc = canopy_ring(z, canopy_crown(z), 18, 1.002, 0.010)
+        mesh.tube(name, "Su34_CanopyFrame", arc, half_w=width, half_t=0.016,
+                  up=v(0, 1, 0))
+
+    arch(WS_ARCH_Z, "Su34_FrameArchFront", 0.042)
+    arch(CANOPY_Z0, "Su34_FrameArchRear", 0.042)
+
+    for side in (-1, 1):
+        mesh.tube("Su34_FrameSill", "Su34_CanopyFrame",
+                  [v(side * CANOPY_HALF_WIDTH * 1.002, sill_y(z) + 0.012, z)
+                   for z in (CANOPY_Z0, 4.6, 5.4, 6.2, WS_ARCH_Z, CANOPY_Z1)],
+                  half_w=0.030, half_t=0.020)
+
+    # windscreen centre bow and the canopy spine rail
+    mesh.tube("Su34_FrameBow", "Su34_CanopyFrame",
+              [v(0.0, skin_top_y(z, 0.0) + 0.012, z) for z in (CANOPY_Z1, 7.20, 7.07, WS_ARCH_Z)],
+              half_w=0.040, half_t=0.020, up=v(0, 0, 1))
+    mesh.tube("Su34_FrameRail", "Su34_CanopyFrame",
+              [v(0.0, canopy_crown(z) + 0.012, z)
+               for z in (CANOPY_Z0, 4.4, 5.2, 6.0, 6.6, WS_ARCH_Z)],
+              half_w=0.034, half_t=0.016)
+
+    # sill rim of the opening (hull side, below the canopy frame)
+    for z, nm in ((CANOPY_Z1, "Su34_SillFront"), (CANOPY_Z0, "Su34_SillRear")):
+        mesh.tube(nm, "Su34_CamoDark", sill_curve(z), half_w=0.030, half_t=0.014,
+                  up=v(0, 1, 0))
+
+    # canopy hinges and the actuator struts
+    for side in (-1, 1):
+        mesh.box("Su34_CanopyHinge", "Su34_CanopyFrame",
+                 v(side * 0.46, canopy_crown(CANOPY_Z0) - 0.12, CANOPY_Z0 + 0.02),
+                 (0.10, 0.06, 0.10))
+        mesh.tube("Su34_CanopyStrut", "Su34_Metal",
+                  [v(side * 0.62, sill_y(CANOPY_Z0) + 0.06, CANOPY_Z0 - 0.10),
+                   v(side * 0.55, canopy_crown(CANOPY_Z0) - 0.22, CANOPY_Z0 + 0.16)],
+                  half_w=0.016, half_t=0.016)
+
+    # rear fairing: the spine behind the canopy
+    fair = [canopy_ring(z, canopy_crown(z) - 0.10, 26, k)
+            for z, k in ((CANOPY_Z0, 1.0), (3.68, 0.82), (3.52, 0.58), (3.40, 0.34))]
     p = mesh.loft("Su34_CanopyFairing", "Su34_Camo", fair, closed_ring=False)
     mesh.orient(p, lambda c: v(0, sill_y(c[2]) - 0.2, c[2]))
 
+    # wipers parked at the bottom of the windscreen
+    for side in (-1, 1):
+        mesh.tube("Su34_Wiper", "Su34_CanopyFrame",
+                  [v(side * 0.34, sill_y(7.30) + 0.03, 7.30),
+                   v(side * 0.26, sill_y(7.30) + 0.045, 7.16),
+                   v(side * 0.20, sill_y(7.30) + 0.055, 7.04)],
+                  half_w=0.012, half_t=0.008)
+
 
 # ------------------------------------------------------------------- cockpit
+CABIN_FLOOR = 1.20
+CABIN_HW = 0.94
+CABIN_Z0, CABIN_Z1 = 4.46, 7.04
+SEAT_X = 0.42
+PANEL_HW = 0.88
+PANEL_Y0, PANEL_Y1 = 1.42, 2.00
+PANEL_Z0, PANEL_Z1 = 6.52, 6.94
+PANEL_N = np.array([0.0, 0.5869, -0.8097])      # normal, pointing at the crew
+PANEL_U = np.array([0.0, 0.8097, 0.5869])       # up along the panel face
+PANEL_R = np.column_stack([[1.0, 0.0, 0.0], PANEL_U, PANEL_N])
+
+
+def rot_x(deg: float) -> np.ndarray:
+    a = math.radians(deg)
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[1.0, 0.0, 0.0], [0.0, c, -s], [0.0, s, c]])
+
+
+def glass_edge_y(z: float, x: float) -> float:
+    """Height at which the canopy glazing crosses the plane ``x``."""
+    base = sill_y(z)
+    t = math.acos(min(abs(x) / CANOPY_HALF_WIDTH, 1.0))
+    return base + (canopy_crown(z) - base) * math.sin(t) ** 1.5
+
+
+def panel_pt(x: float, t: float, off: float = 0.0):
+    xr = min(abs(x) / PANEL_HW, 1.0)
+    zb = PANEL_Z0 - 0.10 * xr * xr
+    zt = PANEL_Z1 - 0.14 * xr * xr
+    y = PANEL_Y0 + (PANEL_Y1 - PANEL_Y0) * t
+    z = zb + (zt - zb) * t
+    return v(x + PANEL_N[0] * off, y + PANEL_N[1] * off, z + PANEL_N[2] * off)
+
+
 def build_cockpit(mesh: Mesh) -> None:
-    """Two-crew, side-by-side cabin (pilot left, navigator right)."""
-    z0, z1 = 4.55, 7.05
-    half = 0.86
-    floor = 1.22
-    sill = sill_y(5.6)
+    """Two-crew side-by-side cabin: pilot left, weapons-system operator right.
 
-    # floor plate and the two side walls of the tub
-    mesh.box("Su34_CockpitFloor", "Su34_Cockpit", v(0, floor, (z0 + z1) / 2),
-             (2 * half, 0.04, z1 - z0))
-    for side in (-1, 1):
-        mesh.box("Su34_CockpitWall", "Su34_Cockpit",
-                 v(side * half, (floor + sill) / 2, (z0 + z1) / 2),
-                 (0.04, sill - floor, z1 - z0))
-    mesh.box("Su34_CockpitRear", "Su34_Cockpit", v(0, (floor + sill) / 2, z0),
-             (2 * half, sill - floor, 0.05))
-    mesh.box("Su34_CockpitFront", "Su34_Cockpit", v(0, (floor + sill) / 2, z1),
-             (2 * half, sill - floor, 0.05))
+    Everything the crew can look at is modelled: a curved instrument panel with
+    recessed displays, side consoles with switch banks, K-36-style seats with
+    harness and head box, and a padded liner over the bare fuselage skin so the
+    interior never reads as an empty shell.
+    """
+    mid_z = 0.5 * (CABIN_Z0 + CABIN_Z1)
 
-    # instrument panel: a slanted slab across the whole cabin
-    panel = [v(-half, floor + 0.10, 6.62), v(-half, sill - 0.02, 6.95),
-             v(half, sill - 0.02, 6.95), v(half, floor + 0.10, 6.62)]
-    mesh.quad("Su34_Panel", "Su34_Cockpit", panel)
-    for side in (-1, 1):
-        for dx in (-0.30, 0.30):
-            mesh.box("Su34_MFD", "Su34_MFD",
-                     v(side * 0.42 + dx * side, (floor + sill) / 2 + 0.16, 6.78),
-                     (0.22, 0.18, 0.02))
-    # HUD in front of the pilot (left seat)
-    mesh.box("Su34_HUD", "Su34_HUD", v(-0.42, sill - 0.10, 6.72), (0.20, 0.16, 0.02))
+    # ---------------------------------------------------------------- shell
+    mesh.box("Su34_CabinFloor", "Su34_Tread", v(0, CABIN_FLOOR - 0.03, mid_z),
+             (2 * CABIN_HW, 0.06, CABIN_Z1 - CABIN_Z0))
+    # floor plates run across the footwell
+    zs = np.linspace(CABIN_Z0 + 0.08, CABIN_Z1 - 0.06, 14)
+    for i in range(len(zs) - 1):
+        mesh.box("Su34_CabinPlate", "Su34_Metal",
+                 v(0, CABIN_FLOOR + 0.006, 0.5 * (zs[i] + zs[i + 1])),
+                 (2 * CABIN_HW - 0.10, 0.012, (zs[i + 1] - zs[i]) * 0.72))
 
-    # seats, side by side, facing +Z
-    for sx, name in ((-0.42, "Pilot"), (0.42, "Wso")):
-        mesh.box(f"Su34_Seat_{name}", "Su34_Cushion", v(sx, floor + 0.34, 5.55),
-                 (0.46, 0.10, 0.48))
-        mesh.box(f"Su34_SeatBack_{name}", "Su34_Cushion",
-                 v(sx, floor + 0.62, 5.24), (0.46, 0.62, 0.10))
-        mesh.box(f"Su34_SeatBase_{name}", "Su34_Frame",
-                 v(sx, floor + 0.14, 5.55), (0.40, 0.22, 0.42))
-    # centre pedestal and side consoles
-    mesh.box("Su34_Pedestal", "Su34_Cockpit", v(0, floor + 0.16, 5.85),
-             (0.24, 0.24, 0.80))
+    # side walls: from the floor up to the glazing line
     for side in (-1, 1):
-        mesh.box("Su34_Console", "Su34_Cockpit",
-                 v(side * (half - 0.10), floor + 0.16, 5.9), (0.16, 0.20, 1.0))
+        zz = np.linspace(CABIN_Z0, CABIN_Z1, 12)
+        lo = [v(side * CABIN_HW, CABIN_FLOOR, z) for z in zz]
+        hi = [v(side * CABIN_HW, glass_edge_y(z, CABIN_HW) + 0.004, z) for z in zz]
+        mesh.quad_strip("Su34_CabinWall", "Su34_Cabin", lo, hi, double_sided=True)
+        # padded armrest rail along the wall
+        mesh.tube("Su34_CabinRail", "Su34_Cabin",
+                  [v(side * (CABIN_HW - 0.03), 1.70, z)
+                   for z in (CABIN_Z0 + 0.15, 5.3, 5.9, 6.4)],
+                  half_w=0.07, half_t=0.045)
+
+    # front and rear bulkheads, curved like the canopy opening they close
+    for zc, nm in ((CABIN_Z1, "Su34_BulkheadFront"), (CABIN_Z0, "Su34_BulkheadRear")):
+        arc = canopy_ring(zc, canopy_crown(zc), 22, 0.985, 0.0)
+        floor = [v(p[0], CABIN_FLOOR, zc) for p in arc]
+        mesh.quad_strip(nm, "Su34_Cabin", floor, arc, double_sided=True)
+
+    # sill trim inside the glazing
+    for side in (-1, 1):
+        mesh.tube("Su34_SillTrim", "Su34_Cabin",
+                  [v(side * (CANOPY_HALF_WIDTH - 0.02), sill_y(z) + 0.03, z)
+                   for z in np.linspace(CANOPY_Z0 + 0.06, CANOPY_Z1 - 0.02, 7)],
+                  half_w=0.028, half_t=0.020)
+    # inner hoops and the canopy spine, painted interior grey
+    for z in (WS_ARCH_Z, CANOPY_Z0 + 0.06, 6.30):
+        arc = canopy_ring(z, canopy_crown(z), 18, 0.985, -0.004)
+        mesh.tube("Su34_CabinHoops", "Su34_Cabin", arc, half_w=0.028, half_t=0.014,
+                  up=v(0, 1, 0))
+    mesh.tube("Su34_CabinSpine", "Su34_Cabin",
+              [v(0.0, canopy_crown(z) - 0.03, z)
+               for z in np.linspace(CANOPY_Z0 + 0.10, CANOPY_Z1 - 0.02, 6)],
+              half_w=0.030, half_t=0.014)
+
+    # ------------------------------------------------------- instrument panel
+    bot = [panel_pt(x, 0.0) for x in np.linspace(-PANEL_HW, PANEL_HW, 15)]
+    top = [panel_pt(x, 1.0) for x in np.linspace(-PANEL_HW, PANEL_HW, 15)]
+    mesh.quad_strip("Su34_Panel", "Su34_Frame", bot, top, double_sided=True)
+    # glare shield over the panel top
+    mesh.box("Su34_GlareShield", "Su34_Frame", v(0, 2.03, 7.02), (1.80, 0.05, 0.24))
+    mesh.box("Su34_GlareLip", "Su34_Cabin", v(0, 2.06, 6.93), (1.80, 0.03, 0.06))
+
+    for side in (-1, 1):
+        cx = side * SEAT_X
+        for dx in (-0.19, 0.19):
+            p = panel_pt(cx + dx, 0.56, 0.02)
+            mesh.box("Su34_MFDFrame", "Su34_Frame", p, (0.30, 0.28, 0.05),
+                     rotation=PANEL_R)
+            mesh.box("Su34_MFD", "Su34_MFD", panel_pt(cx + dx, 0.56, 0.045),
+                     (0.25, 0.23, 0.012), rotation=PANEL_R)
+        # standby cluster: three round gauges over the displays
+        for dx in (-0.20, 0.0, 0.20):
+            p = panel_pt(cx + dx, 0.86, 0.020)
+            q = panel_pt(cx + dx, 0.86, 0.045)
+            mesh.cylinder("Su34_GaugeBezel", "Su34_Frame", p, q, 0.055, 0.055,
+                          segments=12, smooth=False)
+            mesh.cylinder("Su34_Gauge", "Su34_MFD", q, panel_pt(cx + dx, 0.86, 0.050),
+                          0.043, 0.043, segments=12, caps=True, smooth=False)
+        # warning lights and switch rows under the displays
+        for i in range(6):
+            p = panel_pt(cx - 0.30 + i * 0.12, 0.30, 0.022)
+            mesh.box("Su34_Caution", "Su34_Caution", p, (0.07, 0.05, 0.012),
+                     rotation=PANEL_R)
+        # centre console between the seats: throttles and radios
+        mesh.box("Su34_Pedestal", "Su34_Cabin",
+                 v(side * 0.16, 1.42, 5.98), (0.24, 0.44, 0.86))
+        mesh.box("Su34_PedestalTop", "Su34_Frame",
+                 v(side * 0.16, 1.66, 5.98), (0.26, 0.03, 0.88))
+        for dz in (5.86, 6.02):
+            mesh.box("Su34_ThrottleTrack", "Su34_Frame",
+                     v(side * 0.16, 1.70, dz), (0.05, 0.04, 0.26))
+            mesh.box("Su34_Throttle", "Su34_Frame",
+                     v(side * 0.16, 1.76, dz - 0.05), (0.055, 0.10, 0.10))
+        for i in range(4):
+            mesh.box("Su34_Radio", "Su34_Frame",
+                     v(side * 0.16, 1.70, 6.30 + i * 0.11), (0.22, 0.05, 0.07))
+
+        # side console with two switch banks
+        mesh.box("Su34_Console", "Su34_Cabin",
+                 v(side * 0.76, 1.44, 6.02), (0.36, 0.48, 0.92))
+        mesh.box("Su34_ConsoleTop", "Su34_Frame",
+                 v(side * 0.76, 1.69, 6.02), (0.34, 0.03, 0.90))
+        for row in range(2):
+            for col in range(7):
+                mesh.box("Su34_Switch",
+                         "Su34_Metal" if (row + col) % 3 else "Su34_Caution",
+                         v(side * (0.64 + 0.035 + col * 0.033),
+                           1.715,
+                           5.68 + row * 0.30),
+                         (0.020, 0.022, 0.024))
+
+        # ------------------------------------------------------------ seat
+        st = rot_x(-14.0)
+        mesh.box("Su34_SeatRail", "Su34_Frame", v(cx, 1.36, 5.56),
+                 (0.42, 0.30, 0.50))
+        mesh.box("Su34_SeatPan", "Su34_Cushion", v(cx, 1.55, 5.62),
+                 (0.46, 0.12, 0.50))
+        for dx in (-0.235, 0.235):
+            mesh.box("Su34_SeatPanBolster", "Su34_Cushion",
+                     v(cx + dx, 1.60, 5.60), (0.07, 0.13, 0.46))
+        mesh.box("Su34_SeatBack", "Su34_Cushion", v(cx, 1.84, 5.34),
+                 (0.50, 0.64, 0.12), rotation=st)
+        mesh.box("Su34_SeatBackPlate", "Su34_Frame", v(cx, 1.84, 5.29),
+                 (0.54, 0.68, 0.03), rotation=st)
+        for dx in (-0.275, 0.275):
+            mesh.box("Su34_SeatBolster", "Su34_Cushion",
+                     v(cx + dx, 1.86, 5.36), (0.08, 0.46, 0.26), rotation=st)
+        mesh.box("Su34_Headrest", "Su34_Cushion", v(cx, 2.14, 5.24),
+                 (0.30, 0.20, 0.14), rotation=st)
+        mesh.box("Su34_HeadBox", "Su34_Frame", v(cx, 2.16, 5.20),
+                 (0.34, 0.22, 0.06), rotation=st)
+        # ejection handle loop and the two harness straps
+        mesh.tube("Su34_EjectHandle", "Su34_Caution",
+                  [v(cx - 0.12, 1.66, 5.52), v(cx - 0.12, 1.72, 5.44),
+                   v(cx, 1.74, 5.40), v(cx + 0.12, 1.72, 5.44),
+                   v(cx + 0.12, 1.66, 5.52)],
+                  half_w=0.014, half_t=0.010)
+        for dx in (-0.11, 0.11):
+            mesh.box("Su34_Harness", "Su34_Webbing", v(cx + dx, 1.88, 5.28),
+                     (0.06, 0.56, 0.02), rotation=st)
+        mesh.box("Su34_LapBelt", "Su34_Webbing", v(cx, 1.60, 5.50),
+                 (0.42, 0.05, 0.02))
+
+        # control stick, pedals and the side-stick boot
+        mesh.cylinder("Su34_StickBoot", "Su34_Frame",
+                      v(cx, 1.58, 5.94), v(cx, 1.64, 5.90), 0.075, 0.050, segments=10)
+        mesh.cylinder("Su34_Stick", "Su34_Metal",
+                      v(cx, 1.62, 5.90), v(cx, 1.80, 5.82), 0.019, 0.016, segments=8)
+        mesh.box("Su34_StickGrip", "Su34_Frame", v(cx, 1.84, 5.80),
+                 (0.055, 0.13, 0.075), rotation=rot_x(12.0))
+        mesh.box("Su34_StickHead", "Su34_Frame", v(cx, 1.92, 5.79),
+                 (0.05, 0.05, 0.05))
+        for dx in (-0.13, 0.13):
+            mesh.box("Su34_Pedal", "Su34_Metal",
+                     v(cx + dx, 1.30, 6.44), (0.10, 0.17, 0.035),
+                     rotation=rot_x(-22.0))
+            mesh.box("Su34_PedalArm", "Su34_Frame",
+                     v(cx + dx, 1.25, 6.40), (0.05, 0.05, 0.16))
+
+    # ---------------------------------------------------------- pilot HUD
+    hx = -SEAT_X
+    mesh.box("Su34_HUDBase", "Su34_Frame", v(hx, 2.07, 6.82), (0.30, 0.08, 0.14))
+    mesh.box("Su34_HUDProjector", "Su34_Frame", v(hx, 2.13, 6.79), (0.16, 0.10, 0.10))
+    mesh.box("Su34_HUDCombiner", "Su34_HUD", v(hx, 2.20, 6.87),
+             (0.20, 0.18, 0.010), rotation=rot_x(-18.0))
+    mesh.box("Su34_HUDGlassFrame", "Su34_Frame", v(hx, 2.20, 6.876),
+             (0.225, 0.20, 0.006), rotation=rot_x(-18.0))
 
 
 # ---------------------------------------------------------------------- wings
@@ -367,11 +624,14 @@ def wing_le(x: float) -> float:
 
 
 def wing_te(x: float) -> float:
-    """Traced trailing edge: nearly fore-aft inboard (flaps), swept outboard."""
-    kink_x, kink_z, slope_in, slope_out = 5.00, -5.17, 0.020, 0.296
-    if x <= kink_x:
-        return kink_z - (x - 2.33) * slope_in
-    return kink_z - (x - kink_x) * slope_out
+    """Trailing edge traced off the plan view.
+
+    The sheet is unambiguous here: at z = -4.6 the wing only exists outboard of
+    x = 3.0 and at z = -5.0 outboard of x = 4.5, so the edge is one straight
+    line from (2.33, -4.42) to the tip at (7.22, -5.75), 15.2 deg of forward
+    sweep.  The old kink at x = 5 put the whole inboard chord 0.7 m too far aft.
+    """
+    return -4.42 - (x - 2.33) * 0.272
 
 
 def build_wings(mesh: Mesh) -> None:
@@ -527,7 +787,7 @@ def build_fins(mesh: Mesh) -> None:
             cap.append({"le": v(side * x, y, le), "chord": le - te,
                         "thickness": f["thickness"] * 1.02})
         p = lifting_surface(mesh, "Su34_FinCap_L" if side < 0 else "Su34_FinCap_R",
-                            "Su34_FinTip", cap, span_dir=v(0, 1, 0),
+                            "Su34_Camo", cap, span_dir=v(0, 1, 0),
                             thickness_dir=v(side, 0, 0), chord_dir=v(0, 0, 1),
                             airfoil_n=13)
         mesh.orient(p, lambda c_: v(side * f["root_x"], c_[1], c_[2]))
@@ -551,20 +811,29 @@ def build_fins(mesh: Mesh) -> None:
 def build_engines(mesh: Mesh) -> None:
     for side in (-1, 1):
         x = side * 1.18
-        # intake lip on the side of the forward fuselage, throat recessed
-        # intake lip on the nose of each trunk, not on the hull side
-        mesh.cylinder("Su34_IntakeFace", "Su34_Intake",
-                      v(side * 1.16, 0.72, 2.12), v(side * 1.16, 0.72, 1.84),
-                      0.50, 0.46, segments=20, caps=True, smooth=False)
-        mesh.cylinder("Su34_IntakeLip", "Su34_Metal",
-                      v(side * 1.16, 0.72, 2.26), v(side * 1.16, 0.72, 2.10),
-                      0.54, 0.51, segments=20, caps=False)
+        # intake: a rounded rectangular mouth, a dark duct and a sharp lip
+        def mouth(z, hw, lo, hi, n=22, inset=0.0):
+            return [v(side * 1.16 + q[0] * (1.0 - inset), q[1], z)
+                    for q in section_ring(z, hw, hi, lo, 3.4, n)]
+
+        lip_out = mouth(2.52, 0.52, 0.18, 1.28)
+        lip_in = mouth(2.44, 0.46, 0.24, 1.22)
+        throat = mouth(2.02, 0.41, 0.29, 1.17)
+        mesh.loft("Su34_IntakeLip", "Su34_Camo",
+                  [lip_out, lip_in], closed_ring=True, smooth=False)
+        mesh.loft("Su34_IntakeDuct", "Su34_Intake",
+                  [lip_in, throat], closed_ring=True, cap_end=True, smooth=False)
+        # boundary-layer splitter ahead of the mouth, outboard edge
+        mesh.box("Su34_IntakeSplitter", "Su34_Metal",
+                 v(side * 1.72, 0.76, 2.34), (0.05, 0.92, 0.40))
         # nacelle fairing along the lower side of the hull
         rings = []
-        for z, hw, top, bot in ((2.30, 0.50, 1.22, 0.50), (1.60, 0.56, 1.24, 0.16),
-                                (-0.50, 0.57, 1.26, 0.02), (-3.00, 0.58, 1.28, 0.03),
-                                (-5.50, 0.60, 1.30, 0.10), (-7.20, 0.62, 1.30, 0.18),
-                                (-8.30, 0.58, 1.26, 0.26)):
+        # the trunks hang lowest at the wing station and climb aft, exactly as
+        # the side view's belly line does
+        for z, hw, top, bot in ((2.30, 0.50, 1.22, 0.42), (1.60, 0.56, 1.24, 0.16),
+                                (-0.50, 0.57, 1.26, 0.04), (-3.00, 0.58, 1.28, 0.18),
+                                (-5.50, 0.60, 1.30, 0.28), (-7.20, 0.62, 1.30, 0.36),
+                                (-8.30, 0.58, 1.26, 0.42)):
             rings.append([v(q[0] + side * 1.16, q[1], q[2])
                           for q in section_ring(z, hw, top, bot, 4.0, 24)])
         p = mesh.loft("Su34_Nacelle_L" if side < 0 else "Su34_Nacelle_R",
@@ -575,7 +844,8 @@ def build_engines(mesh: Mesh) -> None:
         # station, wider than the trunks, because the wing fairing blends the
         # nacelle into the root.  It hides under the wing in plan view.
         shoulder_rings = []
-        for z, hw, top, bot in ((1.30, 0.18, 1.30, 0.95), (0.60, 0.30, 1.32, 0.86),
+        for z, hw, top, bot in ((1.90, 0.12, 1.24, 0.98), (1.40, 0.20, 1.28, 0.94),
+                                (0.80, 0.27, 1.31, 0.89), (0.20, 0.31, 1.33, 0.85),
                                 (-2.00, 0.31, 1.34, 0.86), (-4.50, 0.30, 1.32, 0.90),
                                 (-5.60, 0.20, 1.28, 0.98)):
             shoulder_rings.append([v(q[0] + side * 1.86, q[1], q[2])
@@ -584,69 +854,182 @@ def build_engines(mesh: Mesh) -> None:
                       "Su34_Camo", shoulder_rings, cap_start=True, cap_end=True)
         mesh.orient(p, lambda c_, s=side: v(s * 1.86, 1.08, c_[2]))
 
-        # nozzle: petals plus a dark throat
+        # nozzle: 14 overlapping petals over a dark throat
+        base_z, exit_z = -7.98, -8.80
+        n_pet = 14
+        for i in range(n_pet):
+            a0 = 2.0 * math.pi * i / n_pet + 0.012
+            a1 = 2.0 * math.pi * (i + 1) / n_pet - 0.012
+            r0, r1 = 0.455, 0.385
+            mesh.quad("Su34_NozzlePetal", "Su34_NozzleHot", [
+                v(x + r0 * math.cos(a0), 1.34 + r0 * math.sin(a0), base_z),
+                v(x + r0 * math.cos(a1), 1.34 + r0 * math.sin(a1), base_z),
+                v(x + r1 * math.cos(a1), 1.34 + r1 * math.sin(a1), exit_z),
+                v(x + r1 * math.cos(a0), 1.34 + r1 * math.sin(a0), exit_z),
+            ])
         mesh.cylinder("Su34_NozzleShell_L" if side < 0 else "Su34_NozzleShell_R",
-                      "Su34_Nozzle", v(x, 1.34, -7.40), v(x, 1.36, -8.85),
-                      0.46, 0.38, segments=22, caps=False)
+                      "Su34_Nozzle", v(x, 1.34, -7.30), v(x, 1.34, -8.00),
+                      0.47, 0.46, segments=22, caps=False)
         mesh.cylinder("Su34_NozzleInner", "Su34_Intake",
-                      v(x, 1.36, -8.60), v(x, 1.36, -8.90), 0.32, 0.30,
+                      v(x, 1.34, -8.30), v(x, 1.34, -8.86), 0.36, 0.30,
                       segments=18, caps=True, smooth=False)
-        for zr, rad in ((-7.80, 0.44), (-8.35, 0.40)):
-            mesh.cylinder("Su34_NozzleRing", "Su34_Nozzle",
-                          v(x, 1.35, zr + 0.025), v(x, 1.35, zr - 0.025),
-                          rad, rad, segments=22, caps=False, smooth=False)
+        mesh.cylinder("Su34_NozzleRing", "Su34_Nozzle",
+                      v(x, 1.34, -8.84), v(x, 1.34, -8.90), 0.39, 0.36,
+                      segments=22, caps=False, smooth=False)
+
+    # beaver tail: the flat fairing between the two nozzles
+    beaver = []
+    for z, hw, top, bot in ((-7.90, 0.44, 1.72, 1.08), (-9.20, 0.42, 1.70, 1.14),
+                            (-10.40, 0.34, 1.66, 1.22), (-11.20, 0.22, 1.60, 1.30)):
+        beaver.append(section_ring(z, hw, top, bot, 3.6, 18))
+    p = mesh.loft("Su34_BeaverTail", "Su34_Camo", beaver,
+                  cap_start=False, cap_end=True)
+    mesh.orient(p, lambda c: v(0.0, 1.40, c[2]))
 
     # tail stinger / brake parachute container
     mesh.cylinder("Su34_TailStinger", "Su34_Camo",
-                  v(0, 1.16, -8.40), v(0, 1.52, -11.35), 0.36, 0.22, segments=16)
+                  v(0, 1.30, -8.40), v(0, 1.52, -11.35), 0.26, 0.20, segments=16)
     mesh.cylinder("Su34_BrakeChute", "Su34_Frame",
                   v(0, 1.53, -11.32), v(0, 1.55, -11.50), 0.20, 0.17, segments=14)
 
 
 # ---------------------------------------------------------------------- gear
-def build_gear(mesh: Mesh) -> None:
-    tyre_r, hub_y = 0.44, GROUND_Y + 0.44
-    # nose gear: twin wheels under the cockpit
-    z = 3.55
-    mesh.cylinder("Su34_NoseGearStrut", "Su34_Gear",
-                  v(0, 0.20, z), v(0, hub_y + 0.06, z), 0.100, 0.085, segments=12)
-    mesh.cylinder("Su34_NoseGearBrace", "Su34_Gear",
-                  v(0, 0.34, z + 0.52), v(0, hub_y + 0.30, z + 0.10),
-                  0.042, 0.038, segments=8)
-    mesh.cylinder("Su34_NoseGearAxle", "Su34_Gear",
-                  v(-0.28, hub_y, z), v(0.28, hub_y, z), 0.05, 0.05, segments=8)
+def wheel(mesh: Mesh, prefix: str, centre, radius: float, half_w: float,
+          tyre: str = "Su34_Tire", hub: str = "Su34_Metal", seg: int = 22) -> None:
+    """Rounded-shoulder tyre on an axis along X, with a brake disc and hub."""
+    cx, cy, cz = centre
+    prof = ((-1.00, 0.62), (-0.965, 0.80), (-0.885, 0.94), (-0.72, 1.00),
+            (0.72, 1.00), (0.885, 0.94), (0.965, 0.80), (1.00, 0.62))
+    ang = [2.0 * math.pi * k / seg for k in range(seg)]
+    rings = []
+    for s, rk in prof:
+        rings.append([v(cx + s * half_w,
+                        cy + radius * rk * math.cos(a),
+                        cz + radius * rk * math.sin(a)) for a in ang])
+    mesh.loft(f"{prefix}Tyre", tyre, rings, cap_start=True, cap_end=True)
+    # tread grooves: three shallow rings around the crown
+    for s in (-0.45, 0.0, 0.45):
+        ring0 = [v(cx + (s - 0.035) * half_w, cy + radius * 1.002 * math.cos(a),
+                   cz + radius * 1.002 * math.sin(a)) for a in ang]
+        ring1 = [v(cx + (s + 0.035) * half_w, cy + radius * 1.002 * math.cos(a),
+                   cz + radius * 1.002 * math.sin(a)) for a in ang]
+        mesh.loft(f"{prefix}Tread", tyre, [ring0, ring1])
     for sx in (-1, 1):
-        mesh.cylinder("Su34_NoseWheel", "Su34_Tire",
-                      v(sx * 0.10, hub_y, z), v(sx * 0.27, hub_y, z),
-                      0.44, 0.44, segments=20, caps=True)
-        mesh.cylinder("Su34_NoseHub", "Su34_Metal",
-                      v(sx * 0.26, hub_y, z), v(sx * 0.30, hub_y, z),
-                      0.12, 0.12, segments=12, caps=True)
-    for sx in (-1, 1):
-        mesh.box("Su34_NoseGearDoor", "Su34_Underside",
-                 v(sx * 0.30, 0.30, z + 0.05), (0.30, 0.04, 1.10))
+        x0 = cx + sx * half_w * 0.72
+        x1 = cx + sx * (half_w + 0.012)
+        mesh.cylinder(f"{prefix}WheelDisc", hub, v(x0, cy, cz), v(x1, cy, cz),
+                      radius * 0.60, radius * 0.60, segments=seg, smooth=False)
+        mesh.cylinder(f"{prefix}BrakeDisc", "Su34_Frame",
+                      v(cx + sx * half_w * 0.30, cy, cz),
+                      v(cx + sx * half_w * 0.66, cy, cz),
+                      radius * 0.44, radius * 0.44, segments=seg, smooth=False)
+        mesh.cylinder(f"{prefix}HubCap", "Su34_Metal",
+                      v(cx + sx * (half_w + 0.010), cy, cz),
+                      v(cx + sx * (half_w + 0.055), cy, cz),
+                      radius * 0.30, radius * 0.16, segments=12)
+        for k in range(6):
+            a = math.pi * 2.0 * k / 6.0
+            mesh.cylinder(f"{prefix}Bolt", "Su34_Metal",
+                          v(cx + sx * (half_w + 0.012),
+                            cy + radius * 0.34 * math.cos(a),
+                            cz + radius * 0.34 * math.sin(a)),
+                          v(cx + sx * (half_w + 0.030),
+                            cy + radius * 0.34 * math.cos(a),
+                            cz + radius * 0.34 * math.sin(a)),
+                          0.018, 0.018, segments=6, smooth=False)
 
-    # main gear: one leg per side, track 4.4 m, wheelbase 6.63 m
+
+def build_gear(mesh: Mesh) -> None:
+    """Nose unit (twin wheels) and the two main legs, with braces and doors."""
+    # ---------------------------------------------------------- nose gear
+    z = 3.55
+    hub_y = GROUND_Y + 0.44
+    mesh.cylinder("Su34_GearNoseBay", "Su34_Intake", v(0, 0.42, z), v(0, 0.72, z),
+                  0.30, 0.30, segments=12, smooth=False)
+    mesh.cylinder("Su34_GearNoseOleo", "Su34_Gear", v(0, 0.66, z + 0.03), v(0, 0.02, z),
+                  0.105, 0.095, segments=14)
+    mesh.cylinder("Su34_GearNosePiston", "Su34_Metal", v(0, 0.06, z), v(0, hub_y + 0.10, z),
+                  0.078, 0.072, segments=14)
+    mesh.cylinder("Su34_GearNoseCollar", "Su34_Gear", v(0, 0.44, z + 0.01), v(0, 0.56, z + 0.01),
+                  0.135, 0.120, segments=14)
+    mesh.cylinder("Su34_GearNoseAxle", "Su34_Metal",
+                  v(-0.30, hub_y, z), v(0.30, hub_y, z), 0.045, 0.045, segments=10)
+    # scissor link
+    mesh.box("Su34_GearNoseScissorA", "Su34_Gear", v(0, 0.02, z + 0.16), (0.05, 0.20, 0.04))
+    mesh.box("Su34_GearNoseScissorB", "Su34_Gear", v(0, -0.22, z + 0.12), (0.05, 0.20, 0.04))
+    # drag brace back into the bay
+    mesh.cylinder("Su34_GearNoseDrag", "Su34_Gear", v(0, 0.40, z + 0.44), v(0, 0.10, z + 0.06),
+                  0.038, 0.036, segments=8)
+    # twin wheels
+    for sx in (-1, 1):
+        wheel(mesh, f"Su34_NoseWheel{'L' if sx < 0 else 'R'}",
+              (sx * 0.185, hub_y, z), 0.44, 0.105, seg=20)
+    # mudguard over the pair
+    guard = []
+    for r in (0.50, 0.56):
+        arc = [v(0.0, hub_y + r * math.sin(a), z + r * math.cos(a))
+               for a in np.linspace(math.radians(28), math.radians(152), 12)]
+        guard.append(arc)
+    for x in (-0.29, 0.29):
+        mesh.quad_strip("Su34_GearNoseGuard", "Su34_Gear",
+                        [v(x, p[1], p[2]) for p in guard[0]],
+                        [v(x, p[1], p[2]) for p in guard[1]],
+                        double_sided=True)
+    for sx in (-1, 1):
+        mesh.box("Su34_GearNoseDoor", "Su34_Underside",
+                 v(sx * 0.34, 0.28, z + 0.10), (0.34, 0.035, 1.15),
+                 rotation=np.array([[1.0, 0.0, 0.0], [0.0, 0.94, -0.34],
+                                    [0.0, 0.34, 0.94]]))
+
+    # ---------------------------------------------------------- main gear
     z = 3.55 - 6.63
     tyre_r = 0.58
     hub_y = GROUND_Y + tyre_r
     for side in (-1, 1):
         x = side * 2.20
-        mesh.cylinder("Su34_MainGearStrut", "Su34_Gear",
-                      v(x - side * 0.10, 0.42, z), v(x, hub_y + 0.10, z),
-                      0.105, 0.090, segments=12)
-        mesh.cylinder("Su34_MainGearBrace", "Su34_Gear",
-                      v(x - side * 0.25, 0.50, z + 0.75),
-                      v(x, hub_y + 0.35, z + 0.18), 0.050, 0.045, segments=8)
-        for sx in (-1, 1):
-            mesh.cylinder("Su34_MainWheel", "Su34_Tire",
-                          v(x + sx * 0.10, hub_y, z), v(x + sx * 0.26, hub_y, z),
-                          tyre_r, tyre_r, segments=22, caps=True)
-            mesh.cylinder("Su34_MainHub", "Su34_Metal",
-                          v(x + sx * 0.25, hub_y, z), v(x + sx * 0.29, hub_y, z),
-                          0.18, 0.18, segments=14, caps=True)
-        mesh.box("Su34_MainGearDoor", "Su34_Underside",
-                 v(x - side * 0.16, 0.30, z + 0.45), (0.30, 0.04, 1.30))
+        px, py = side * 1.44, 0.66           # trunnion on the wing-root underside
+        # trunnion and the leg swinging out to the axle
+        mesh.cylinder("Su34_GearMainTrunnion", "Su34_Gear",
+                      v(px, py, z - 0.16), v(px, py, z + 0.16), 0.085, 0.085,
+                      segments=10)
+        mesh.cylinder("Su34_GearMainOleo", "Su34_Gear",
+                      v(px, py, z), v(px + side * 0.48, -0.06, z),
+                      0.115, 0.100, segments=14)
+        mesh.cylinder("Su34_GearMainPiston", "Su34_Metal",
+                      v(px + side * 0.45, 0.00, z), v(x, hub_y + 0.20, z),
+                      0.082, 0.076, segments=14)
+        mesh.cylinder("Su34_GearMainAxle", "Su34_Metal",
+                      v(x - side * 0.30, hub_y, z), v(x + side * 0.30, hub_y, z),
+                      0.052, 0.052, segments=10)
+        # fork cheeks around the wheel
+        for dz in (-0.13, 0.13):
+            mesh.box("Su34_GearMainFork", "Su34_Gear",
+                     v(x, hub_y + 0.22, z + dz), (0.16, 0.42, 0.045),
+                     rotation=rot_x(0.0))
+        # side stay and drag brace, both picking up on the airframe
+        mesh.cylinder("Su34_GearMainStay", "Su34_Gear",
+                      v(side * 1.02, 0.74, z + 0.55),
+                      v(px + side * 0.30, 0.16, z + 0.02), 0.058, 0.050,
+                      segments=8)
+        mesh.cylinder("Su34_GearMainDrag", "Su34_Gear",
+                      v(side * 1.30, 0.52, z + 1.02),
+                      v(px + side * 0.34, 0.10, z + 0.06), 0.052, 0.046,
+                      segments=8)
+        mesh.box("Su34_GearMainScissorA", "Su34_Gear",
+                 v(px + side * 0.40, 0.04, z + 0.16), (0.05, 0.26, 0.045))
+        mesh.box("Su34_GearMainScissorB", "Su34_Gear",
+                 v(x - side * 0.03, hub_y + 0.34, z + 0.12), (0.05, 0.26, 0.045))
+        wheel(mesh, "Su34_MainWheel", (x, hub_y, z), tyre_r, 0.175, seg=24)
+        # door carried on the leg, hanging just inboard of the wheel
+        mesh.box("Su34_GearMainDoor", "Su34_Underside",
+                 v(x - side * 0.16, hub_y + 0.36, z + 0.30), (0.026, 0.62, 0.86))
+
+    # --------------------------------------------------------- bay doors
+    for side in (-1, 1):
+        mesh.box("Su34_GearMainBayDoor", "Su34_Underside",
+                 v(side * 1.30, 0.30, z - 0.10), (0.56, 0.026, 1.06),
+                 rotation=np.array([[1.0, 0.0, side * 0.30], [0.0, 1.0, 0.0],
+                                    [-side * 0.30, 0.0, 1.0]]))
 
 
 # -------------------------------------------------------------------- pylons
@@ -671,18 +1054,41 @@ def build_pylons(mesh: Mesh) -> None:
 # ------------------------------------------------------------------- details
 def build_details(mesh: Mesh) -> None:
     # radome tip, pitot boom
+    mesh.cylinder("Su34_RadomeSeam", "Su34_CamoDark",
+                  v(0, 0.99, 9.64), v(0, 0.99, 9.54), 0.70, 0.70,
+                  segments=24, caps=False, smooth=False)
     mesh.cylinder("Su34_RadomeTip", "Su34_Frame",
                   v(0, 0.60, 11.30), v(0, 0.60, 11.66), 0.14, 0.055, segments=16)
     mesh.cylinder("Su34_Pitot", "Su34_Metal",
-                  v(0, 0.60, 11.60), v(0, 0.60, 12.62), 0.026, 0.010, segments=8)
+                  v(0, 0.52, 11.55), v(0, 0.52, 12.26), 0.030, 0.012, segments=8)
 
-    # IRST ball in front of the windscreen, offset to starboard
+    # OLS-35 IRST ball on the centreline, ahead of the windscreen
+    mesh.box("Su34_IRSTFairing", "Su34_Camo", v(0.0, 1.94, 7.66), (0.26, 0.14, 0.34))
     mesh.cylinder("Su34_IRST", "Su34_Frame",
-                  v(0.24, 1.88, 7.60), v(0.24, 1.95, 7.84), 0.115, 0.105,
-                  segments=14)
+                  v(0.0, 1.95, 7.52), v(0.0, 2.02, 7.82), 0.135, 0.120,
+                  segments=16)
     mesh.cylinder("Su34_IRSTLens", "Su34_Intake",
-                  v(0.24, 1.94, 7.82), v(0.24, 1.96, 7.88), 0.088, 0.088,
-                  segments=14, caps=True, smooth=False)
+                  v(0.0, 2.01, 7.80), v(0.0, 2.03, 7.86), 0.098, 0.098,
+                  segments=16, caps=True, smooth=False)
+
+    # anti-glare matt panel over the nose top
+    glare = []
+    for z in (7.42, 7.90, 8.40, 8.85):
+        y = interp(TOP_LINE, z) + 0.004
+        w = 0.30 - max(0.0, z - 8.2) * 0.25
+        glare.append((v(-w, y, z), v(w, y, z)))
+    mesh.quad_strip("Su34_AntiGlare", "Su34_CamoDark",
+                    [g[0] for g in glare], [g[1] for g in glare], double_sided=True)
+
+    # angle-of-attack vanes and static dischargers
+    for side in (-1, 1):
+        hw8 = interp(HALF_WIDTH, 8.90)
+        mesh.cylinder("Su34_AoAVane", "Su34_Metal",
+                      v(side * (hw8 - 0.02), 1.16, 8.90),
+                      v(side * (hw8 + 0.12), 1.16, 8.90), 0.012, 0.008, segments=6)
+        mesh.cylinder("Su34_StaticTip", "Su34_Metal",
+                      v(side * 7.28, 1.26, -3.05), v(side * 7.34, 1.26, -3.22),
+                      0.012, 0.003, segments=6)
 
     # refuelling probe on the port side of the nose
     mesh.cylinder("Su34_RefuelProbe", "Su34_Metal",
@@ -708,6 +1114,40 @@ def build_details(mesh: Mesh) -> None:
     mesh.box("Su34_AntennaVentral", "Su34_Frame", v(0, 0.02, -3.4), (0.04, 0.16, 0.40))
 
 
+# --------------------------------------------------------------------- decals
+def build_decals(mesh: Mesh) -> None:
+    """Red stars and the bort number, as flat quads laid on the skin."""
+    uv = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
+
+    # fin stars, outboard face
+    for side in (-1, 1):
+        x = side * 2.205
+        q = [v(x, 3.40, -5.15), v(x, 3.40, -6.05),
+             v(x, 4.30, -6.05), v(x, 4.30, -5.15)]
+        mesh.quad("Su34_DecalStarFin", "Su34_Star",
+                  q if side > 0 else list(reversed(q)), uv)
+
+    # wing stars, both surfaces near the tip
+    for side in (-1, 1):
+        for dy, name in ((0.012, "Su34_DecalStarWingTop"),
+                         (-0.012, "Su34_DecalStarWingBot")):
+            y = 1.304 + dy
+            q = [v(side * 4.55, y, -2.60), v(side * 5.45, y, -2.60),
+                 v(side * 5.45, y, -3.50), v(side * 4.55, y, -3.50)]
+            if (dy > 0) != (side > 0):
+                q = list(reversed(q))
+            mesh.quad(name, "Su34_Star", q, uv)
+
+    # bort number on the forward fuselage, one quad per side
+    for side in (-1, 1):
+        x = side * 0.985
+        q = [v(x, 0.84, 9.10), v(x, 0.84, 8.10),
+             v(x, 1.52, 8.10), v(x, 1.52, 9.10)]
+        if side < 0:
+            q = list(reversed(q))
+        mesh.quad("Su34_DecalNumber", "Su34_Number", q, uv)
+
+
 # ------------------------------------------------------------------------ main
 def build() -> Mesh:
     mesh = Mesh()
@@ -722,7 +1162,8 @@ def build() -> Mesh:
     build_gear(mesh)
     build_pylons(mesh)
     build_details(mesh)
-    apply_box_uv(mesh, tile_size=5.0)
+    build_decals(mesh)
+    apply_box_uv(mesh, tile_size=2.6)
     return mesh
 
 

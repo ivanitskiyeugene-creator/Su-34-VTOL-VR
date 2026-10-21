@@ -229,6 +229,47 @@ class Mesh:
             rings.append(ring)
         return self.loft(name, material, rings, cap_start=caps, cap_end=caps, smooth=smooth)
 
+    def tube(
+        self,
+        name: str,
+        material: str,
+        path: Sequence[Sequence[float]],
+        half_w: float = 0.02,
+        half_t: float = 0.02,
+        up: Sequence[float] | None = None,
+        smooth: bool = False,
+    ) -> Part:
+        """Sweep a rectangular section along a polyline.
+
+        Used for canopy frames, sill rails, wipers, antennas and struts: a
+        flat band looks like structure, a row of cylinders looks like beads.
+        ``half_w`` is the width across the path, ``half_t`` the thickness.
+        """
+        pts = [np.asarray(p, dtype=float) for p in path]
+        if len(pts) < 2:
+            raise ValueError("tube needs at least two points")
+        rings = []
+        for i, p in enumerate(pts):
+            if i == 0:
+                tan = normalize(pts[1] - pts[0])
+            elif i == len(pts) - 1:
+                tan = normalize(pts[-1] - pts[-2])
+            else:
+                tan = normalize(pts[i + 1] - pts[i - 1])
+            ref = np.asarray(up if up is not None else (0.0, 1.0, 0.0), dtype=float)
+            if abs(np.dot(normalize(ref), tan)) > 0.95:
+                ref = np.array([1.0, 0.0, 0.0])
+            a = normalize(np.cross(tan, ref))
+            b = normalize(np.cross(a, tan))
+            rings.append([
+                p + a * half_w + b * half_t,
+                p - a * half_w + b * half_t,
+                p - a * half_w - b * half_t,
+                p + a * half_w - b * half_t,
+            ])
+        return self.loft(name, material, rings, cap_start=True, cap_end=True,
+                         smooth=smooth)
+
     def quad_strip(
         self,
         name: str,
@@ -244,7 +285,17 @@ class Mesh:
         for i in range(len(left) - 1):
             part.add_quad(li[i], li[i + 1], ri[i + 1], ri[i])
             if double_sided:
-                part.add_quad(li[i], ri[i], ri[i + 1], li[i + 1])
+                # the reversed copy is pushed 0.6 mm behind the front face: two
+                # coincident quads z-fight into a speckled mess in every
+                # rasteriser (and in Unity), so keep them apart
+                quad_p = [left[i], left[i + 1], right[i + 1], right[i]]
+                nrm = np.cross(np.subtract(quad_p[1], quad_p[0]),
+                               np.subtract(quad_p[2], quad_p[0]))
+                ln = float(np.linalg.norm(nrm))
+                if ln > 1e-9:
+                    nrm = nrm / ln
+                back = [part.add_vertex(np.subtract(q, nrm * 0.0006)) for q in quad_p]
+                part.add_quad(back[0], back[3], back[2], back[1])
         return part
 
     def quad(

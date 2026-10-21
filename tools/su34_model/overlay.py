@@ -144,15 +144,24 @@ def ref_front():
     return sil, 0.5 * (xs.min() + xs.max()), ys.max(), (xs.max() - xs.min() + 1)
 
 
-def front_mask(verts, faces, cx, row_bot, span_px):
-    """Orthographic head-on silhouette, scaled and dropped onto the sheet."""
+def front_mask(verts, faces, cx, row_bot, span_px, row_top=None):
+    """Orthographic head-on silhouette, scaled and dropped onto the sheet.
+
+    ``row_top`` switches on separate horizontal / vertical scales: the colour
+    sheet's head-on view is drawn about 5 % squashed vertically, so a single
+    isotropic scale would charge that drawing error to the model.  Pass it to
+    measure shape rather than the sheet's aspect ratio.
+    """
     used = np.unique(faces) if len(faces) else np.array([], int)
     x0, x1 = verts[used, 0].min(), verts[used, 0].max()
-    y0 = verts[used, 1].min()
-    k = span_px / (x1 - x0)
+    y0, y1 = verts[used, 1].min(), verts[used, 1].max()
+    kx = span_px / (x1 - x0)
+    ky = kx
+    if row_top is not None:
+        ky = (row_bot - row_top) / max(y1 - y0, 1e-6)
     return project(verts, faces, (0, 1),
-                   lambda p: np.stack([cx + (p[:, 0] - 0.5 * (x0 + x1)) * k,
-                                       row_bot - (p[:, 1] - y0) * k], axis=1),
+                   lambda p: np.stack([cx + (p[:, 0] - 0.5 * (x0 + x1)) * kx,
+                                       row_bot - (p[:, 1] - y0) * ky], axis=1),
                    size=(736, 980))
 
 
@@ -184,11 +193,16 @@ def main():
 
     rf, fcx, frow, fspan = ref_front()
     v3, f3 = load_obj(OBJ, skip_gear=True)
-    mf = front_mask(v3, f3, fcx, frow, fspan)
     fwin = np.zeros_like(rf)
     fwin[815:965, 60:510] = True
-    rf, mf = rf & fwin, mf & fwin
+    rf = rf & fwin
+    rows = np.where(rf.any(1))[0]
+    mf = front_mask(v3, f3, fcx, frow, fspan) & fwin
     report("front", rf, mf)
+    # shape score: the sheet's head-on view is squashed vertically, so re-fit
+    # the vertical scale before judging the outline itself
+    mf2 = front_mask(v3, f3, fcx, frow, fspan, row_top=int(rows.min())) & fwin
+    report("front*", rf, mf2)
 
     base = Image.open(REF).convert("RGB")
     px = np.array(base)
@@ -209,7 +223,7 @@ def main():
 
     fimg = Image.open(FRONT_REF).convert("RGB")
     fpx = np.array(fimg)
-    for mask_ref, mask_mdl in ((rf, mf),):
+    for mask_ref, mask_mdl in ((rf, mf2),):
         agree = mask_ref & mask_mdl
         miss = mask_ref & ~mask_mdl
         extra = mask_mdl & ~mask_ref
