@@ -1,7 +1,7 @@
 # Su-34 material library
 newmtl Su34_Camo
 Ka 0.0 0.0 0.0
-Kd 0.5730 0.6390 0.6780
+Kd 1.0000 1.0000 1.0000
 Ks 0.0700 0.0750 0.0800
 Ns 22.0
 d 1.0000
@@ -10,7 +10,7 @@ map_Kd textures/su34_camo.png
 
 newmtl Su34_CamoDark
 Ka 0.0 0.0 0.0
-Kd 0.5060 0.5760 0.6200
+Kd 1.0000 1.0000 1.0000
 Ks 0.1200 0.1300 0.1400
 Ns 22.0
 d 1.0000
@@ -19,7 +19,7 @@ map_Kd textures/su34_camo_dark.png
 
 newmtl Su34_Underside
 Ka 0.0 0.0 0.0
-Kd 0.5200 0.5730 0.6080
+Kd 1.0000 1.0000 1.0000
 Ks 0.1000 0.1100 0.1100
 Ns 16.0
 d 1.0000
@@ -37,10 +37,10 @@ map_Kd textures/su34_radome.png
 
 newmtl Su34_Glass
 Ka 0.0 0.0 0.0
-Kd 0.4600 0.5500 0.6000
-Ks 0.9500 1.0000 1.0000
+Kd 0.2200 0.2600 0.3000
+Ks 0.7500 0.8000 0.8500
 Ns 180.0
-d 0.4600
+d 0.8200
 illum 2
 
 newmtl Su34_Frame
@@ -198,7 +198,7 @@ illum 2
 
 newmtl Su34_CanopyFrame
 Ka 0.0 0.0 0.0
-Kd 0.3300 0.3600 0.3800
+Kd 0.4200 0.4550 0.4850
 Ks 0.2800 0.3000 0.3200
 Ns 45.0
 d 1.0000

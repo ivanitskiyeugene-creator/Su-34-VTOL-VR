@@ -40,16 +40,16 @@ TEX = "textures/"
 
 # --------------------------------------------------------------------- palette
 MATERIALS = {
-    "Su34_Camo":      {"color": (0.573, 0.639, 0.678), "specular": (0.07, 0.075, 0.08),
+    "Su34_Camo":      {"color": (1.0, 1.0, 1.0), "specular": (0.07, 0.075, 0.08),
                        "shininess": 22, "map": TEX + "su34_camo.png"},
-    "Su34_CamoDark":  {"color": (0.506, 0.576, 0.620), "specular": (0.12, 0.13, 0.14),
+    "Su34_CamoDark":  {"color": (1.0, 1.0, 1.0), "specular": (0.12, 0.13, 0.14),
                        "shininess": 22, "map": TEX + "su34_camo_dark.png"},
-    "Su34_Underside": {"color": (0.520, 0.573, 0.608), "specular": (0.10, 0.11, 0.11),
+    "Su34_Underside": {"color": (1.0, 1.0, 1.0), "specular": (0.10, 0.11, 0.11),
                        "shininess": 16, "map": TEX + "su34_underside.png"},
     "Su34_Radome":    {"color": (0.660, 0.678, 0.690), "specular": (0.06, 0.06, 0.06),
                        "shininess": 10, "map": TEX + "su34_radome.png"},
-    "Su34_Glass":     {"color": (0.46, 0.55, 0.60), "specular": (0.95, 1.00, 1.00),
-                       "shininess": 180, "alpha": 0.46},
+    "Su34_Glass":     {"color": (0.22, 0.26, 0.30), "specular": (0.75, 0.80, 0.85),
+                       "shininess": 180, "alpha": 0.82},
     "Su34_Frame":     {"color": (0.188, 0.204, 0.220), "specular": (0.30, 0.30, 0.32),
                        "shininess": 60, "map": TEX + "su34_frame.png"},
     "Su34_Metal":     {"color": (0.502, 0.518, 0.533), "specular": (0.78, 0.78, 0.80),
@@ -88,7 +88,7 @@ MATERIALS = {
                        "shininess": 4},
     "Su34_Caution":   {"color": (0.620, 0.520, 0.140), "specular": (0.20, 0.18, 0.10),
                        "shininess": 30},
-    "Su34_CanopyFrame": {"color": (0.330, 0.360, 0.380), "specular": (0.28, 0.30, 0.32),
+    "Su34_CanopyFrame": {"color": (0.420, 0.455, 0.485), "specular": (0.28, 0.30, 0.32),
                        "shininess": 45, "map": TEX + "su34_camo_dark.png"},
 }
 
@@ -130,7 +130,7 @@ TOP_LINE = [
 ]
 
 COCKPIT_Z0, COCKPIT_Z1 = 4.25, 7.25      # canopy opening, rear .. front
-CANOPY_HALF_WIDTH = 0.98
+CANOPY_HALF_WIDTH = 0.86
 
 # ------------------------------------------------------------------- planforms
 # The numbers below are read off the traced outline of docs/refs/bp-1 (see
@@ -139,7 +139,7 @@ CANOPY_HALF_WIDTH = 0.98
 WING = dict(root_x=0.60, tip_x=7.22, le_root=1.685, le_slope=0.935,
             te_root=-5.009, te_slope=0.1371, y_root=1.42, y_tip=1.28,
             thickness=(0.077, 0.052))
-CANARD = dict(root_x=1.06, tip_x=3.09, le_root=3.92, le_tip=1.98,
+CANARD = dict(root_x=0.80, tip_x=3.05, le_root=4.10, le_tip=2.00,
               te_root=1.64, te_tip=1.29, y=1.46, thickness=0.050)
 STAB = dict(root_x=0.90, tip_x=4.76, le_root=-4.72, le_tip=-7.86,
             te_root=-8.55, te_tip=-8.72, y=0.76, thickness=0.042)
@@ -293,8 +293,8 @@ def build_fuselage(mesh: Mesh) -> None:
             hw, top, bot, n = station_at(z)
             y = 0.5 * (top + bot) - 0.04
             w = hw * 1.004
-            upper.append(v(side * (w + 0.105), y + 0.022, z))
-            lower.append(v(side * w, y - 0.060, z))
+            upper.append(v(side * (w + 0.030), y + 0.012, z))
+            lower.append(v(side * w, y - 0.026, z))
         mesh.quad_strip("Su34_Chine_L" if side < 0 else "Su34_Chine_R", "Su34_Camo",
                         upper, lower, double_sided=True)
 
@@ -334,7 +334,7 @@ def canopy_crown(z: float) -> float:
 def canopy_ring(z, crown, n: int = 26, scale: float = 1.0, lift: float = 0.0):
     """Half-ellipse, but superelliptic (power 0.55): the Su-34 canopy is a
     wide, flat-topped bathtub with near-vertical side glass, not a bubble."""
-    base = sill_y(z) + 0.06
+    base = sill_y(z)
     hw = CANOPY_HALF_WIDTH * scale
     ring = []
     for k in range(n + 1):
@@ -1259,7 +1259,7 @@ def apply_waterline(obj: str, waterline: float = 0.86) -> None:
             ln = float(np.linalg.norm(n))
             ny = float(n[1] / ln) if ln else 0.0
             y = float((a[1] + b[1] + c[1]) / 3.0)
-            dark = (ny > -0.15 and y > waterline)
+            dark = not (ny < -0.35 and y < 0.92)
             want = "Su34_Camo" if dark else "Su34_Underside"
             if want != cur:
                 out.append("usemtl " + want)
