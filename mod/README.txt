@@ -50,12 +50,14 @@ Press F10 in flight for an on-screen diagnostic overlay.
 
 Credits
 -------
-Exterior mesh: see the Workshop description and docs/АТРИБУЦИЯ.md in the source
-repository. If the airframe was extracted from a Workshop NPC pack, the author
-of that pack is credited here, in the in-game vehicle description and in the
-Workshop page.
+Exterior 3D model: "Su-34" by bohmerang - https://sketchfab.com/bohmerang
+It is a free download and is used with the author's permission. Thank you,
+bohmerang - the whole look of this aircraft is your work.
 
-This package contains no VTOL VR game files. The 3D model was generated from
-scratch by the tools in the source repository (MIT licence). The flight model,
-cockpit interactables and seat rigs come from the VTOL VR vehicle the package
-was built on, exactly like other aircraft mods that require a DLC donor.
+This is a free, non-commercial fan project. It is not sold anywhere and there
+are no donations of any kind. If the author of the model ever asks for it to be
+removed from the mod, it will be removed immediately.
+
+Cockpit interactables, seat rigs and the flight model come from the VTOL VR
+vehicle this package was built on, exactly like other aircraft mods that need a
+DLC donor. No VTOL VR game files are redistributed with this package.

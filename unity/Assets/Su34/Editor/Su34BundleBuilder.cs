@@ -67,11 +67,12 @@ namespace Su34.EditorTools
         public const string PrefabAssetName = "Su34";
         public const string VehicleName = "Su-34";
         public const string VehicleNickname = "Fullback";
-        // Credit for the airframe the exterior mesh was taken from. Leave the
-        // author empty while the model is still procedural; fill it in before
-        // publishing to the Workshop (docs/АТРИБУЦИЯ.md has the full list).
-        public const string MeshCreditAuthor = "";
-        public const string MeshCreditMod = "";
+        // Credit for the airframe the exterior mesh was taken from. The mesh is
+        // bohmerang's free Su-34 model from Sketchfab; the credit is appended to
+        // the in-game vehicle description (docs/АТРИБУЦИЯ.md has the full list).
+        public const string MeshCreditAuthor = "bohmerang";
+        public const string MeshCreditMod = "Su-34";
+        public const string MeshCreditUrl = "https://sketchfab.com/bohmerang";
 
         public const string VehicleDescription =
             "Twin-seat, twin-engine supersonic strike fighter. Heavy payload, long range, " +
@@ -83,8 +84,9 @@ namespace Su34.EditorTools
             get
             {
                 if (string.IsNullOrEmpty(MeshCreditAuthor)) return VehicleDescription;
-                string credit = " Exterior mesh from \"" + (string.IsNullOrEmpty(MeshCreditMod) ? "a workshop add-on" : MeshCreditMod) +
-                                "\" by " + MeshCreditAuthor + " (VTOL VR Workshop), used with the author's permission.";
+                string credit = " Exterior model \"" + (string.IsNullOrEmpty(MeshCreditMod) ? "Su-34" : MeshCreditMod) +
+                                "\" by " + MeshCreditAuthor + " (" + MeshCreditUrl + "), a free model used with the " +
+                                "author's permission - thank you! Free, non-commercial fan project, no donations.";
                 return VehicleDescription + credit;
             }
         }

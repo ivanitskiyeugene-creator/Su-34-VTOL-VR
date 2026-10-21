@@ -1,7 +1,7 @@
 {
   "$schema": "https://gitlab.com/vtolvr-mods/ModLoader/-/raw/release/schema.json",
   "Title": "Su-34 Fullback",
-  "Description": "Su-34 Fullback - twin-seat, twin-engine strike fighter for VTOL VR. Custom exterior model and a side-by-side two-crew cockpit on a proven two-seat airframe. Two players can fly it when the mission-editor player spawn is set to 2 slots; the package is built on the EF-24G or T-55 donor, so that DLC is required. Full loadout and mission-editor support. Model generated from scratch for this mod (no game assets were copied).",
+  "Description": "Su-34 Fullback - twin-seat, twin-engine strike fighter for VTOL VR. Custom exterior model and a side-by-side two-crew cockpit on a proven two-seat airframe. Two players can fly it when the mission-editor player spawn is set to 2 slots; the package is built on the EF-24G or T-55 donor, so that DLC is required. Full loadout and mission-editor support. Exterior 3D model: \"Su-34\" by bohmerang (https://sketchfab.com/bohmerang), a free model used with the author's permission - thank you! This is a free, non-commercial fan project with no donations.",
   "PreviewImageUrl": "",
   "Tags": [
     "Aircraft",
