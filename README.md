@@ -164,6 +164,11 @@ docs/АТРИБУЦИЯ.md                    кредиты чужих рабо
 `build.ps1` сам ищет установленный VTOL VR (Steam + libraryfolders.vdf), можно
 указать путь вручную: `-GamePath "D:\Steam\steamapps\common\VTOL VR"`.
 
+**Версия Unity важна.** Бандл собирается только в **Unity 2020.3.x** (та же
+версия, на которой работает VTOL VR). Если стоит Unity 2022.3 — поставь рядом
+2020.3.49f1 через Unity Hub (Installs → Install Editor → Archive), иначе игра
+не загрузит бандл. На DLL это не распространяется.
+
 ## Как это работает
 
 ### Мод

@@ -61,7 +61,16 @@ namespace Su34.EditorTools
             "FA26B",
         };
 
-        public const string ModelObjPath = "Assets/Su34/Models/su34.obj";
+        // Which OBJ the builder imports. "su34_donor.obj" is bohmerang's donated
+        // model (the shipped exterior, see docs/АТРИБУЦИЯ.md); "su34.obj" is the
+        // procedural fallback written by tools/su34_model/generate_su34.py.
+        public const string ModelFileName = "su34_donor.obj";
+        public const string ModelObjPath = ModelsDir + "/" + ModelFileName;
+
+        // VTOL VR runs Unity 2020.3.x. An asset bundle built with another editor
+        // version is refused by the player ("built with a newer version of
+        // Unity"), so the build stops instead of producing a dead file.
+        public const string RequiredUnityVersion = "2020.3";
         public const string OutputPrefabPath = "Assets/Su34/Su34.prefab";
         public const string BundleName = "su34";
         public const string PrefabAssetName = "Su34";
@@ -222,11 +231,15 @@ namespace Su34.EditorTools
             EnsureFolder(ModelsDir + "/textures");
 
             int copied = 0;
+            string wantMtl = Path.GetFileNameWithoutExtension(ModelFileName) + ".mtl";
             foreach (string file in Directory.GetFiles(source))
             {
                 string ext = Path.GetExtension(file).ToLowerInvariant();
+                string name = Path.GetFileName(file);
+                if (ext == ".obj" && name != ModelFileName) continue;
+                if (ext == ".mtl" && name != wantMtl) continue;
                 if (ext != ".obj" && ext != ".mtl") continue;
-                File.Copy(file, Path.Combine(ModelsDir, Path.GetFileName(file)), true);
+                File.Copy(file, Path.Combine(ModelsDir, name), true);
                 copied++;
             }
             foreach (string file in Directory.GetFiles(Path.Combine(source, "textures")))
@@ -239,11 +252,26 @@ namespace Su34.EditorTools
             Debug.Log("[Su-34] copied " + copied + " model files into " + ModelsDir);
         }
 
+        private static bool UnityVersionOk(List<string> report)
+        {
+            string v = Application.unityVersion;
+            if (v.StartsWith(RequiredUnityVersion)) return true;
+            string msg = "this editor is Unity " + v + ", but VTOL VR needs Unity " +
+                         RequiredUnityVersion + ".x. A bundle built here will not load in " +
+                         "game. Install " + RequiredUnityVersion + ".49f1 next to this version " +
+                         "(Unity Hub: Installs -> Install Editor -> Archive) and open the " +
+                         "project with it.";
+            if (report != null) report.Add("ERROR: " + msg);
+            Debug.LogError("[Su-34] " + msg);
+            return false;
+        }
+
         [MenuItem("VTOL VR/Su-34/0b - Check setup", priority = 1)]
         public static void CheckSetup()
         {
             CopyModelAssets();
             bool ok = true;
+            ok &= UnityVersionOk(null);
             ok &= CheckFile(DonorPrefab, ActiveDonorName + " donor prefab (AssetRipper export of VTOL VR)");
             ok &= CheckFile(ModelObjPath, "Su-34 model");
             ok &= CheckFolder(ModelsDir + "/textures", "Su-34 textures");
@@ -300,6 +328,7 @@ namespace Su34.EditorTools
         [MenuItem("VTOL VR/Su-34/2 - Build prefab + asset bundle", priority = 3)]
         public static void Build()
         {
+            if (!UnityVersionOk(null)) return;
             CopyModelAssets();
             if (!CheckFile(DonorPrefab, "donor prefab")) return;
             if (!CheckFile(ModelObjPath, "Su-34 model")) return;
@@ -311,6 +340,7 @@ namespace Su34.EditorTools
             try
             {
                 root.name = PrefabAssetName;
+                report.Add("unity: " + Application.unityVersion + "   model: " + ModelFileName);
                 report.Add("donor prefab: " + ActiveDonorName + "  (" + DonorPrefab + ")");
 
                 // ------------------------------------------------ vehicle metadata
