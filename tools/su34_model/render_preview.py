@@ -340,7 +340,56 @@ def main() -> None:
     sheet.save(sheet_path)
     print("wrote", sheet_path)
 
+    clay_sheet(verts, uvs, normals, tris, mats)
     cockpit_sheet(verts, uvs, normals, tris, mats)
+
+
+def clay_sheet(verts, uvs, normals, tris, mats) -> None:
+    """Same four views, one neutral material: judges shape, not camouflage.
+
+    Textures are dropped and every material is replaced by a light grey clay,
+    except the glass, which stays transparent so the canopy silhouette reads.
+    """
+    clay = {}
+    for name in mats:
+        if "Glass" in name:
+            clay[name] = {"color": (0.55, 0.62, 0.68), "spec": 0.2, "alpha": 0.35,
+                          "tex": None, "tex_alpha": None}
+        elif "HUD" in name or "MFD" in name:
+            clay[name] = {"color": (0.18, 0.20, 0.22), "spec": 0.3, "alpha": 1.0,
+                          "tex": None, "tex_alpha": None}
+        else:
+            clay[name] = {"color": (0.72, 0.73, 0.75), "spec": 0.18, "alpha": 1.0,
+                          "tex": None, "tex_alpha": None}
+
+    views = {
+        "quarter": Camera(np.array([21.0, 8.5, 24.0]), np.array([0.0, -0.2, -1.0]),
+                          np.array([0.0, 1.0, 0.0]), 30),
+        "side": Camera(np.array([38.0, 1.2, 0.6]), np.array([0.0, -0.1, 0.6]),
+                       np.array([0.0, 1.0, 0.0]), 28),
+        "top": Camera(np.array([0.0, 52.0, -0.5]), np.array([0.0, 0.0, -0.5]),
+                      np.array([0.0, 0.0, 1.0]), 28),
+        "front": Camera(np.array([0.0, 1.4, 40.0]), np.array([0.0, -0.1, 0.0]),
+                        np.array([0.0, 1.0, 0.0]), 22),
+    }
+    w, h = W * SS, H * SS
+    panels = []
+    for name, cam in views.items():
+        img = render(verts, uvs, normals, tris, clay, cam, w, h, ambient=0.55)
+        panels.append((name, img.resize((W, H), Image.LANCZOS)))
+
+    sheet = Image.new("RGB", (W * 2, H * 2), (12, 15, 20))
+    order = ["quarter", "side", "top", "front"]
+    by_name = dict(panels)
+    for i, name in enumerate(order):
+        sheet.paste(by_name[name], ((i % 2) * W, (i // 2) * H))
+    draw = ImageDraw.Draw(sheet)
+    for i, name in enumerate(order):
+        draw.text(((i % 2) * W + 18, (i // 2) * H + 16), f"Su-34  /  {name}  (clay)",
+                  fill=(235, 238, 242))
+    path = os.path.join(OUT, "su34_clay.png")
+    sheet.save(path)
+    print("wrote", path)
 
 
 def cockpit_sheet(verts, uvs, normals, tris, mats) -> None:
