@@ -172,11 +172,11 @@ def hull_exponent(z: float) -> float:
     if z > 11.30:                       # rounded radome tip
         return 2.4
     if z > 8.20:                        # flat-topped duckbill nose
-        return 3.1
-    if z > 6.00:                        # cockpit barrel
-        return 2.9
-    t = float(np.clip((6.0 - z) / 6.0, 0.0, 1.0))
-    n = 2.9 + 1.4 * t
+        return 3.4
+    if z > 4.30:                        # cockpit deck: flat, with hard shoulders
+        return 4.2
+    t = float(np.clip((4.3 - z) / 6.0, 0.0, 1.0))
+    n = 4.2 - 1.2 * t
     if z < -8.0:
         n = max(3.2, n - (-8.0 - z) * 0.10)
     return n
@@ -332,13 +332,17 @@ def canopy_crown(z: float) -> float:
 
 
 def canopy_ring(z, crown, n: int = 26, scale: float = 1.0, lift: float = 0.0):
-    base = sill_y(z)
+    """Half-ellipse, but superelliptic (power 0.55): the Su-34 canopy is a
+    wide, flat-topped bathtub with near-vertical side glass, not a bubble."""
+    base = sill_y(z) + 0.06
     hw = CANOPY_HALF_WIDTH * scale
     ring = []
     for k in range(n + 1):
         t = math.pi * k / n
-        y = base + (crown - base) * max(0.0, math.sin(t)) ** 1.35
-        ring.append(v(hw * math.cos(t), y + lift, z))
+        ct, st = math.cos(t), max(0.0, math.sin(t))
+        x = hw * math.copysign(abs(ct) ** 0.62, ct)
+        y = base + (crown - base) * st ** 0.55
+        ring.append(v(x, y + lift, z))
     return ring
 
 
@@ -1227,11 +1231,51 @@ def build() -> Mesh:
     return mesh
 
 
+def apply_waterline(obj: str, waterline: float = 0.86) -> None:
+    """Dark upper camouflage, light belly, split along a hard waterline.
+
+    The Su-34 carries one colour over the whole upper surface (wings, spine,
+    fin) and a lighter blue-grey under it; a single uniform blotch texture
+    everywhere reads as a paint job that is not there in reality.
+    """
+    lines = open(obj, encoding="utf-8").read().splitlines()
+    xyz = {}
+    out = []
+    cur = None
+    for line in lines:
+        if line.startswith("v "):
+            xyz[len(xyz) + 1] = tuple(float(q) for q in line.split()[1:4])
+            out.append(line)
+            continue
+        if line.startswith("usemtl "):
+            cur = line.split()[1]
+            out.append(line)
+            continue
+        if line.startswith("f ") and cur in ("Su34_Camo", "Su34_CamoDark",
+                                            "Su34_Underside"):
+            ids = [int(t.split("/")[0]) for t in line.split()[1:]]
+            a, b, c = (np.array(xyz[i]) for i in ids)
+            n = np.cross(b - a, c - a)
+            ln = float(np.linalg.norm(n))
+            ny = float(n[1] / ln) if ln else 0.0
+            y = float((a[1] + b[1] + c[1]) / 3.0)
+            dark = (ny > -0.15 and y > waterline)
+            want = "Su34_Camo" if dark else "Su34_Underside"
+            if want != cur:
+                out.append("usemtl " + want)
+                cur = want
+            out.append(line)
+            continue
+        out.append(line)
+    open(obj, "w", encoding="utf-8").write("\n".join(out) + "\n")
+
+
 def main() -> None:
     os.makedirs(OUT_DIR, exist_ok=True)
     mesh = build()
     obj = os.path.join(OUT_DIR, "su34.obj")
     write_obj(obj, mesh, "su34.mtl")
+    apply_waterline(obj)
     write_mtl(os.path.join(OUT_DIR, "su34.mtl"), MATERIALS)
     verts = sum(len(p.vertices) for p in mesh.parts)
     tris = sum(len(p.faces) for p in mesh.parts)

@@ -280,9 +280,9 @@ def main() -> None:
 
     # Russian AF blue-grey camouflage: two tones on top, light blue-grey below.
     made.append(make_camo("su34_camo.png",
-                          base=(113, 128, 141),
-                          blotches=[(104, 119, 133), (123, 137, 149), (95, 111, 126)],
-                          seed=11, streaks_strength=8, panel_strength=26, soft=3.2))
+                          base=(74, 86, 99),
+                          blotches=[(66, 78, 91), (86, 98, 111), (56, 68, 81)],
+                          seed=11, streaks_strength=8, panel_strength=34, soft=3.2))
     made.append(make_camo("su34_camo_dark.png",
                           base=(103, 118, 132),
                           blotches=[(95, 110, 124), (114, 128, 141), (86, 102, 117)],
