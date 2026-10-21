@@ -53,12 +53,22 @@ https://unity.com/releases/editor/whats-new/2020.3.49f1. Дополнитель�
 
 ## 3. Подключить файлы этого репозитория
 
-1. Скопируйте папку `unity/Assets/Su34` в `Assets/` вашего Unity-проекта.
-2. Модель руками копировать не надо: пункт `0 - Copy model + textures` (и
-   каждая сборка) сам кладёт `su34_donor.obj`, `su34_donor.mtl` и PNG-текстуры
-   в `Assets/Su34/Models/` — из папки репозитория, которую билдер находит по
-   своему расположению.
-3. В Unity дождитесь импорта OBJ (он появится как префаб с мешами).
+Проще всего — скриптом из корня репозитория, он делает всё за вас:
+
+```powershell
+.\tools\prepare_unity_project.ps1 -Export "D:\RipperExport" -Project "D:\VTOLVR_Project"
+```
+
+Вручную:
+
+1. Скопировать папку `unity/Assets/Su34` в `Assets/Su34` проекта.
+2. Скопировать `assets/model/su34_donor.obj`, `assets/model/su34_donor.mtl` и
+   `assets/model/textures/*.png` в `Assets/Su34/Models/` и
+   `Assets/Su34/Models/textures/`.
+3. Дождаться импорта OBJ (он появится как префаб с мешами).
+
+Если модель уже лежит в `Assets/Su34/Models`, билдер её не трогает и пишет
+`model already imported` — проект можно держать отдельно от репозитория.
 
 ## 4. Сборка
 

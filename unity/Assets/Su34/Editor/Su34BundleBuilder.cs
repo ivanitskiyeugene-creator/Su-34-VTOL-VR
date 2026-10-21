@@ -207,28 +207,69 @@ namespace Su34.EditorTools
         // Copying them automatically removes a step that is easy to get wrong.
         private const string ModelsDir = "Assets/Su34/Models";
 
-        private static string RepoModelDir
+        // The Unity project normally lives OUTSIDE this repository (for example
+        // D:\VTOLVR_Project with only Assets/Su34 copied into it), so guessing
+        // "..\assets\model" from the current directory is not enough. Search
+        // order:
+        //   1. ModelSourceOverride, if you set it;
+        //   2. assets/model in the project folder (project created in the repo);
+        //   3. assets/model in any of the four parent folders of the project;
+        //   4. the copy already imported into Assets/Su34/Models.
+        public const string ModelSourceOverride = "";
+
+        private static string FindModelSource()
         {
-            get
+            if (!string.IsNullOrEmpty(ModelSourceOverride) && Directory.Exists(ModelSourceOverride))
+                return ModelSourceOverride;
+
+            string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            var dir = new DirectoryInfo(projectRoot);
+            for (int i = 0; i < 5 && dir != null; i++, dir = dir.Parent)
             {
-                string project = Directory.GetCurrentDirectory();   // ...\unity
-                return Path.GetFullPath(Path.Combine(project, "..", "assets", "model"));
+                string candidate = Path.Combine(dir.FullName, "assets", "model");
+                if (File.Exists(Path.Combine(candidate, ModelFileName))) return candidate;
             }
+            return "";
+        }
+
+        private static bool TexturesPresent()
+        {
+            string dir = Path.Combine(ModelsDir, "textures");
+            return Directory.Exists(dir) && Directory.GetFiles(dir, "*.png").Length > 0;
         }
 
         [MenuItem("VTOL VR/Su-34/0 - Copy model + textures into Assets", priority = 0)]
         public static void CopyModelAssets()
         {
-            string source = RepoModelDir;
-            if (!Directory.Exists(source))
-            {
-                Debug.LogError("[Su-34] cannot find the model folder: " + source +
-                               " - run this from the unity/ folder of the repository.");
-                return;
-            }
+            SyncModelAssets();
+        }
+
+        /// <summary>
+        /// Makes sure the selected OBJ, its MTL and the PNG textures are in
+        /// Assets/Su34/Models. Returns false only when the model is missing.
+        /// </summary>
+        private static bool SyncModelAssets()
+        {
             EnsureFolder("Assets/Su34");
             EnsureFolder(ModelsDir);
             EnsureFolder(ModelsDir + "/textures");
+
+            string source = FindModelSource();
+            if (string.IsNullOrEmpty(source))
+            {
+                if (File.Exists(ModelObjPath) && TexturesPresent())
+                {
+                    Debug.Log("[Su-34] model already imported at " + ModelObjPath +
+                              " - skipping the copy (set ModelSourceOverride to refresh it)");
+                    AssetDatabase.Refresh();
+                    return true;
+                }
+                Debug.LogError("[Su-34] model not found. Either copy " + ModelFileName + ", its .mtl and " +
+                               "textures/*.png from the repository's assets/model folder into " + ModelsDir +
+                               ", or put the Unity project inside the repository's unity/ folder, or set " +
+                               "ModelSourceOverride in Su34BundleBuilder.cs.");
+                return false;
+            }
 
             int copied = 0;
             string wantMtl = Path.GetFileNameWithoutExtension(ModelFileName) + ".mtl";
@@ -242,14 +283,19 @@ namespace Su34.EditorTools
                 File.Copy(file, Path.Combine(ModelsDir, name), true);
                 copied++;
             }
-            foreach (string file in Directory.GetFiles(Path.Combine(source, "textures")))
+            string texSource = Path.Combine(source, "textures");
+            if (Directory.Exists(texSource))
             {
-                if (Path.GetExtension(file).ToLowerInvariant() != ".png") continue;
-                File.Copy(file, Path.Combine(ModelsDir, "textures", Path.GetFileName(file)), true);
-                copied++;
+                foreach (string file in Directory.GetFiles(texSource))
+                {
+                    if (Path.GetExtension(file).ToLowerInvariant() != ".png") continue;
+                    File.Copy(file, Path.Combine(ModelsDir, "textures", Path.GetFileName(file)), true);
+                    copied++;
+                }
             }
             AssetDatabase.Refresh();
-            Debug.Log("[Su-34] copied " + copied + " model files into " + ModelsDir);
+            Debug.Log("[Su-34] copied " + copied + " model files from " + source + " into " + ModelsDir);
+            return TexturesPresent();
         }
 
         private static bool UnityVersionOk(List<string> report)
@@ -269,8 +315,7 @@ namespace Su34.EditorTools
         [MenuItem("VTOL VR/Su-34/0b - Check setup", priority = 1)]
         public static void CheckSetup()
         {
-            CopyModelAssets();
-            bool ok = true;
+            bool ok = SyncModelAssets();
             ok &= UnityVersionOk(null);
             ok &= CheckFile(DonorPrefab, ActiveDonorName + " donor prefab (AssetRipper export of VTOL VR)");
             ok &= CheckFile(ModelObjPath, "Su-34 model");
@@ -329,7 +374,7 @@ namespace Su34.EditorTools
         public static void Build()
         {
             if (!UnityVersionOk(null)) return;
-            CopyModelAssets();
+            if (!SyncModelAssets()) return;
             if (!CheckFile(DonorPrefab, "donor prefab")) return;
             if (!CheckFile(ModelObjPath, "Su-34 model")) return;
 
