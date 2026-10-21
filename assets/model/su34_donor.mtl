@@ -1,0 +1,10 @@
+newmtl Su34_Donor
+Ka 0.0 0.0 0.0
+Kd 1.0 1.0 1.0
+Ks 0.10 0.10 0.10
+Ns 20.0
+d 1.0
+illum 2
+map_Kd textures/donor_basecolor.png
+map_Ks textures/donor_roughness.png
+norm textures/donor_normal.png
