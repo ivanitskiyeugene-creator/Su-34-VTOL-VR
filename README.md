@@ -101,6 +101,7 @@
 ```
 assets/model/su34.obj, su34.mtl      процедурная модель Су-34 (24 464 трис, 18 материалов)
 docs/model/su34_preview.png          превью (4 вида) — сгенерировано без Unity
+docs/model/su34_clay.png             то же без текстур: оценка формы
 docs/model/su34_cockpit.png          лист по кабине: фонарь, нутро, вид с мест пилота и штурмана
 tools/su34_model/                    генератор модели + софтверный рендер превью
 src/Su34Mod/                         исходники мода (C#, .NET Framework 4.7.2)
