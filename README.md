@@ -99,10 +99,10 @@
 ## Что уже есть
 
 ```
-assets/model/su34.obj, su34.mtl      процедурная модель Су-34 (37 410 трис, 24 материала)
+assets/model/su34.obj, su34.mtl      процедурная модель Су-34 (38 170 трис, 24 материала)
 docs/model/su34_preview.png          превью (4 вида) — сгенерировано без Unity
 docs/model/su34_clay.png             то же без текстур: оценка формы
-docs/model/su34_overlay.png, docs/model/su34_overlay_front.png          наложение модели на чертёж (IoU 94.4% сверху / 92.2% сбоку / 76.7% спереди)
+docs/model/su34_overlay.png, docs/model/su34_overlay_front.png          наложение модели на чертёж (IoU 94.3% сверху / 91.9% сбоку / 76.7% спереди)
 docs/model/su34_cockpit.png          лист по кабине: фонарь, нутро, вид с мест пилота и штурмана
 tools/su34_model/                    генератор модели (обводы сняты с чертежа) + рендер + сверка
 docs/refs/bp-*.png                   чертежи, по которым строится планер

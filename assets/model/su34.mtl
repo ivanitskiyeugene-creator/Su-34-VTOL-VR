@@ -2,7 +2,7 @@
 newmtl Su34_Camo
 Ka 0.0 0.0 0.0
 Kd 0.5730 0.6390 0.6780
-Ks 0.1200 0.1300 0.1400
+Ks 0.0700 0.0750 0.0800
 Ns 22.0
 d 1.0000
 illum 2
@@ -37,10 +37,10 @@ map_Kd textures/su34_radome.png
 
 newmtl Su34_Glass
 Ka 0.0 0.0 0.0
-Kd 0.6200 0.7500 0.8100
+Kd 0.4600 0.5500 0.6000
 Ks 0.9500 1.0000 1.0000
 Ns 180.0
-d 0.3800
+d 0.4600
 illum 2
 
 newmtl Su34_Frame
@@ -198,7 +198,7 @@ illum 2
 
 newmtl Su34_CanopyFrame
 Ka 0.0 0.0 0.0
-Kd 0.5450 0.6000 0.6300
+Kd 0.3300 0.3600 0.3800
 Ks 0.2800 0.3000 0.3200
 Ns 45.0
 d 1.0000

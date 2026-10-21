@@ -157,12 +157,19 @@ def make_camo(name: str, base, blotches, seed: int, streaks_strength: int = 26,
     rng = random.Random(seed)
     img = Image.new("RGB", (SIZE, SIZE), base)
     d = ImageDraw.Draw(img)
-    for i in range(96):
+    # Large soft patches (2-4 m across on a 5 m tile) are what the Su-34
+    # scheme actually looks like; a field of small blobs reads as digital camo.
+    for i in range(46):
         cx, cy = rng.uniform(0, SIZE), rng.uniform(0, SIZE)
-        r = rng.uniform(46, 150)
+        r = rng.uniform(160, 330)
         col = blotches[i % len(blotches)]
-        poly(d, blob(rng, cx, cy, r, n=rng.randint(7, 12)), col)
-    # the real scheme has hard-edged patches, only a touch of softening
+        poly(d, blob(rng, cx, cy, r, n=rng.randint(9, 14)), col)
+    # a second, smaller generation breaks up the borders of the big patches
+    for i in range(80):
+        cx, cy = rng.uniform(0, SIZE), rng.uniform(0, SIZE)
+        r = rng.uniform(45, 130)
+        col = blotches[(i * 2 + 1) % len(blotches)]
+        poly(d, blob(rng, cx, cy, r, n=rng.randint(7, 11)), col)
     img = img.filter(ImageFilter.GaussianBlur(soft))
     # grain
     n = noise_layer(seed + 1, scale=2, blur=1.0)
@@ -273,17 +280,17 @@ def main() -> None:
 
     # Russian AF blue-grey camouflage: two tones on top, light blue-grey below.
     made.append(make_camo("su34_camo.png",
-                          base=(116, 133, 146),
-                          blotches=[(92, 110, 125), (138, 154, 165), (76, 95, 111)],
-                          seed=11, streaks_strength=8, panel_strength=32))
+                          base=(113, 128, 141),
+                          blotches=[(104, 119, 133), (123, 137, 149), (95, 111, 126)],
+                          seed=11, streaks_strength=8, panel_strength=26, soft=3.2))
     made.append(make_camo("su34_camo_dark.png",
-                          base=(100, 118, 132),
-                          blotches=[(78, 96, 112), (124, 141, 154), (64, 82, 98)],
-                          seed=23, streaks_strength=10, panel_strength=36))
+                          base=(103, 118, 132),
+                          blotches=[(95, 110, 124), (114, 128, 141), (86, 102, 117)],
+                          seed=23, streaks_strength=10, panel_strength=30, soft=3.2))
     made.append(make_camo("su34_underside.png",
-                          base=(142, 157, 168),
-                          blotches=[(126, 143, 156), (158, 171, 180), (118, 136, 150)],
-                          seed=31, streaks_strength=8, panel_strength=26))
+                          base=(138, 152, 164),
+                          blotches=[(128, 143, 156), (150, 163, 173), (120, 136, 149)],
+                          seed=31, streaks_strength=8, panel_strength=26, soft=2.4))
     # The Su-34 radome is light grey with a dark tip.
     made.append(make_plain("su34_radome.png", (188, 192, 196), 41, panel_strength=14, grain=0.04))
     made.append(make_plain("su34_fintip.png", (222, 226, 228), 43, panel_strength=8, grain=0.03))
