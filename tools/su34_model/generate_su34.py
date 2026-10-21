@@ -133,7 +133,7 @@ STAB = dict(root_x=0.90, tip_x=4.80, le_root=-4.72, le_tip=-7.86,
 FIN = dict(root_x=2.04, tip_x=2.18, y_root=1.20, y_tip=4.80,
            le_root=-2.30, le_tip=-5.90, te_root=-7.35, te_tip=-6.95,
            thickness=0.045)
-TIP_POD = dict(x=7.32, y=1.24, z_front=-2.25, z_back=-5.78, r=0.10)
+TIP_POD = dict(x=7.28, y=1.24, z_front=-2.25, z_back=-5.78, r=0.07)
 
 
 def interp(table, z):
