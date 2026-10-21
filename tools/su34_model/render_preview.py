@@ -312,12 +312,14 @@ def main() -> None:
     views = {
         "quarter": Camera(np.array([21.0, 8.5, 24.0]), np.array([0.0, -0.2, -1.0]),
                           np.array([0.0, 1.0, 0.0]), 30),
-        "side": Camera(np.array([38.0, 1.2, 0.6]), np.array([0.0, -0.1, 0.6]),
-                       np.array([0.0, 1.0, 0.0]), 28),
-        "top": Camera(np.array([0.0, 52.0, -0.5]), np.array([0.0, 0.0, -0.5]),
-                      np.array([0.0, 0.0, 1.0]), 28),
-        "front": Camera(np.array([0.0, 1.4, 40.0]), np.array([0.0, -0.1, 0.0]),
-                        np.array([0.0, 1.0, 0.0]), 22),
+        # the three flat views use a long lens (260 m / 3.6 deg): the old 40 m
+        # perspective camera blew the nose up to twice its real size
+        "side": Camera(np.array([260.0, 1.2, 0.6]), np.array([0.0, 1.2, 0.6]),
+                       np.array([0.0, 1.0, 0.0]), 3.6),
+        "top": Camera(np.array([0.0, 260.0, -0.5]), np.array([0.0, 0.0, -0.5]),
+                      np.array([0.0, 0.0, 1.0]), 3.6),
+        "front": Camera(np.array([0.0, 1.2, 260.0]), np.array([0.0, 1.2, 0.0]),
+                        np.array([0.0, 1.0, 0.0]), 3.6),
     }
     images = {}
     for name, cam in views.items():

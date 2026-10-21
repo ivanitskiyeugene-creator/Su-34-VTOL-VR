@@ -33,6 +33,9 @@ REF = os.path.join(ROOT, "docs", "refs", "bp-1-three-views.png")
 OUT = os.path.join(ROOT, "docs", "model", "su34_overlay.png")
 OBJ = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "assets", "model", "su34.obj")
 
+FRONT_REF = os.path.join(ROOT, "docs", "refs", "bp-3-livery.png")
+FRONT_OUT = os.path.join(ROOT, "docs", "model", "su34_overlay_front.png")
+
 TOP_BOX = (0, 500, 5, 315)
 SIDE_BOX = (90, 600, 250, 360)
 SCALE = 0.050652
@@ -43,23 +46,24 @@ LENGTH = 23.3
 STEP = 0.5          # m, chord sampling for the projections
 
 
-NO_GEAR = ("Su34_Gear", "Su34_Tire")
+NO_GEAR = ("Gear", "Wheel", "Tire", "Hub", "Axle", "Strut", "Brace")
 
 
 def load_obj(path, skip_gear=False):
     """Vertices / triangles; with ``skip_gear`` the landing gear and wheels are
     dropped, because the drawing's side view shows the aircraft clean."""
     verts, faces = [], []
-    keep = True
+    keep = keep_obj = True
     for line in open(path):
         if line.startswith("g ") or line.startswith("o "):
             name = line.split(None, 1)[1].strip()
-            keep = not (skip_gear and any(k in name for k in NO_GEAR))
+            keep_obj = not (skip_gear and any(k in name for k in NO_GEAR))
+            keep = keep_obj
         elif line.startswith("v "):
             verts.append([float(t) for t in line.split()[1:4]])
         elif line.startswith("usemtl "):
             mat = line.split(None, 1)[1].strip()
-            keep = not (skip_gear and mat in NO_GEAR)
+            keep = keep_obj and not (skip_gear and any(k in mat for k in NO_GEAR))
         elif line.startswith("f ") and keep:
             idx = [int(t.split("/")[0]) - 1 for t in line.split()[1:]]
             for k in range(1, len(idx) - 1):
@@ -67,13 +71,13 @@ def load_obj(path, skip_gear=False):
     return np.array(verts), np.array(faces, dtype=np.int64)
 
 
-def project(verts, faces, axes, to_px):
+def project(verts, faces, axes, to_px, size=(600, 385)):
     """Rasterise the projected triangles into a bool mask of the ref sheet."""
     pts = np.zeros((verts.shape[0], 2))
     pts[:, 0] = verts[:, axes[0]]
     pts[:, 1] = verts[:, axes[1]]
     px = to_px(pts)
-    img = Image.new("1", (600, 385), 0)
+    img = Image.new("1", size, 0)
     d = ImageDraw.Draw(img)
     for a, b, c in faces:
         d.polygon([tuple(px[a]), tuple(px[b]), tuple(px[c])], fill=1)
@@ -123,6 +127,35 @@ def ref_side():
     return np.array(img, dtype=bool)
 
 
+def ref_front():
+    """The head-on view sits at the bottom of the colour three-view sheet.
+
+    Returns the filled silhouette, its centre column and its bottom row, so the
+    model can be dropped on it at the sheet's own span scale.
+    """
+    a = np.asarray(Image.open(FRONT_REF).convert("L"))
+    win = np.zeros_like(a, bool)
+    win[815:965, 60:510] = True
+    m = ndimage.binary_closing((a < 200) & win, np.ones((2, 2)))
+    lab, n = ndimage.label(m, np.ones((3, 3)))
+    sizes = ndimage.sum(m, lab, range(1, n + 1))
+    sil = ndimage.binary_fill_holes(lab == int(np.argmax(sizes)) + 1)
+    ys, xs = np.where(sil)
+    return sil, 0.5 * (xs.min() + xs.max()), ys.max(), (xs.max() - xs.min() + 1)
+
+
+def front_mask(verts, faces, cx, row_bot, span_px):
+    """Orthographic head-on silhouette, scaled and dropped onto the sheet."""
+    used = np.unique(faces) if len(faces) else np.array([], int)
+    x0, x1 = verts[used, 0].min(), verts[used, 0].max()
+    y0 = verts[used, 1].min()
+    k = span_px / (x1 - x0)
+    return project(verts, faces, (0, 1),
+                   lambda p: np.stack([cx + (p[:, 0] - 0.5 * (x0 + x1)) * k,
+                                       row_bot - (p[:, 1] - y0) * k], axis=1),
+                   size=(736, 980))
+
+
 def report(name, ref, got):
     inter = (ref & got).sum()
     union = (ref | got).sum()
@@ -149,6 +182,14 @@ def main():
     report("top", rt, mt)
     report("side", rs, ms)
 
+    rf, fcx, frow, fspan = ref_front()
+    v3, f3 = load_obj(OBJ, skip_gear=True)
+    mf = front_mask(v3, f3, fcx, frow, fspan)
+    fwin = np.zeros_like(rf)
+    fwin[815:965, 60:510] = True
+    rf, mf = rf & fwin, mf & fwin
+    report("front", rf, mf)
+
     base = Image.open(REF).convert("RGB")
     px = np.array(base)
     def paint(mask_ref, mask_mdl, boost=0.0):
@@ -165,6 +206,22 @@ def main():
     d.text((6, 322), "orange = drawing only, blue = model only, grey = match",
            fill=(0, 0, 0))
     base.save(OUT)
+
+    fimg = Image.open(FRONT_REF).convert("RGB")
+    fpx = np.array(fimg)
+    for mask_ref, mask_mdl in ((rf, mf),):
+        agree = mask_ref & mask_mdl
+        miss = mask_ref & ~mask_mdl
+        extra = mask_mdl & ~mask_ref
+        fpx[agree] = (fpx[agree] * 0.35 + np.array([40, 40, 40]) * 0.65).astype(np.uint8)
+        fpx[miss] = (fpx[miss] * 0.15 + np.array([255, 140, 0]) * 0.85).astype(np.uint8)
+        fpx[extra] = (fpx[extra] * 0.15 + np.array([40, 110, 255]) * 0.85).astype(np.uint8)
+    fi = Image.fromarray(fpx).crop((40, 800, 530, 975))
+    fi = fi.resize((fi.width * 2, fi.height * 2), Image.LANCZOS)
+    ImageDraw.Draw(fi).text((8, 8), "front: orange = drawing only, blue = model only",
+                            fill=(0, 0, 0))
+    fi.save(FRONT_OUT)
+    print("wrote", os.path.relpath(FRONT_OUT, ROOT))
     print("wrote", os.path.relpath(OUT, ROOT))
 
 

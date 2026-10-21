@@ -89,42 +89,51 @@ GROUND_Y = -1.32        # wheel contact plane (y = 0 is the belly)
 #: swallows the hull on the top view, so the flare there is interpolated and
 #: covered by the wing root fairing.
 HALF_WIDTH = [
-    (11.62, 0.09), (11.30, 0.42), (10.30, 0.81), (8.50, 1.01), (6.40, 1.01),
-    (3.90, 1.62), (2.50, 1.75), (1.00, 1.95), (0.00, 2.05), (-1.50, 2.18),
-    (-3.00, 2.27), (-4.50, 2.33), (-5.60, 2.32), (-6.60, 2.28), (-7.60, 2.20),
-    (-8.30, 2.06), (-8.60, 1.78), (-8.95, 0.95), (-9.20, 0.68), (-9.60, 0.50), (-9.95, 0.46),
-    (-10.60, 0.45), (-11.30, 0.36), (-11.62, 0.06),
+    (11.62, 0.09), (11.30, 0.42), (10.30, 0.81), (8.50, 0.95), (6.40, 0.97),
+    (3.90, 1.02), (2.50, 1.06), (1.00, 1.10), (0.00, 1.12), (-1.50, 1.14),
+    (-3.00, 1.16), (-4.50, 1.16), (-5.60, 1.15), (-6.60, 1.12), (-7.60, 1.06),
+    (-8.30, 0.98), (-8.60, 0.88), (-8.95, 0.74), (-9.20, 0.63), (-9.60, 0.52),
+    (-9.95, 0.47), (-10.60, 0.45), (-11.30, 0.36), (-11.62, 0.06),
+]
+
+#: fuselage keel (m).  The traced side outline is the *nacelle* underside, so
+#: the hull itself rides ~0.3 m above the lowest point of the aircraft.
+KEEL = [
+    (11.62, 0.44), (10.60, 0.42), (9.00, 0.42), (7.00, 0.66), (5.00, 0.86),
+    (3.00, 0.96), (2.00, 0.82), (1.00, 0.70), (-1.50, 0.62), (-4.00, 0.62),
+    (-6.50, 0.62), (-8.30, 0.64), (-9.20, 0.90), (-10.00, 1.06), (-11.00, 1.16),
+    (-11.62, 1.26),
 ]
 
 #: fuselage crown (m).  Under the canopy the glass adds the rest of the dome,
 #: behind the cockpit the fin stands on this line.
 TOP_LINE = [
     (11.62, 0.58), (11.30, 0.76), (10.30, 1.11), (9.30, 1.42), (8.30, 1.77),
-    (7.30, 2.12), (6.30, 2.46), (5.30, 2.62), (4.30, 2.72), (3.40, 2.74),
-    (2.40, 2.66), (1.40, 2.55), (0.30, 2.35), (-0.70, 2.15), (-1.60, 1.98),
+    (7.30, 2.12), (6.30, 2.40), (5.30, 2.54), (4.30, 2.64), (3.40, 2.70),
+    (2.40, 2.64), (1.40, 2.54), (0.30, 2.35), (-0.70, 2.15), (-1.60, 1.98),
     (-2.60, 1.95), (-3.60, 1.92), (-4.40, 1.92), (-5.40, 1.92), (-6.40, 1.93),
     (-7.40, 1.93), (-8.40, 1.92), (-9.40, 1.92), (-10.40, 1.92), (-11.10, 1.88),
     (-11.45, 1.80), (-11.62, 1.70),
 ]
 
 COCKPIT_Z0, COCKPIT_Z1 = 4.25, 7.25      # canopy opening, rear .. front
-CANOPY_HALF_WIDTH = 0.96
+CANOPY_HALF_WIDTH = 1.02
 
 # ------------------------------------------------------------------- planforms
 # The numbers below are read off the traced outline of docs/refs/bp-1 (see
 # tools/su34_model/blueprint_data.py): wing LE 43.1 deg, wing TE 7.8 deg,
 # canard LE 52.7 deg, stabilator LE 46.1 deg.
-WING = dict(root_x=1.55, tip_x=7.12, le_root=1.685, le_slope=0.935,
-            te_root=-5.009, te_slope=0.1371, y_root=1.30, y_tip=1.13,
+WING = dict(root_x=0.60, tip_x=7.12, le_root=1.685, le_slope=0.935,
+            te_root=-5.009, te_slope=0.1371, y_root=1.52, y_tip=1.20,
             thickness=(0.062, 0.050))
-CANARD = dict(root_x=1.55, tip_x=3.09, le_root=3.92, le_tip=1.98,
-              te_root=1.64, te_tip=1.29, y=1.66, thickness=0.050)
-STAB = dict(root_x=1.85, tip_x=4.78, le_root=-4.72, le_tip=-7.86,
-            te_root=-8.55, te_tip=-8.72, y=1.22, thickness=0.048)
-FIN = dict(root_x=1.22, tip_x=1.54, y_root=1.94, y_tip=4.78,
-           le_root=-3.60, le_tip=-5.85, te_root=-7.35, te_tip=-6.95,
+CANARD = dict(root_x=0.95, tip_x=3.09, le_root=3.92, le_tip=1.98,
+              te_root=1.64, te_tip=1.29, y=1.44, thickness=0.050)
+STAB = dict(root_x=0.90, tip_x=4.80, le_root=-4.72, le_tip=-7.86,
+            te_root=-8.55, te_tip=-8.72, y=0.68, thickness=0.048)
+FIN = dict(root_x=2.04, tip_x=2.18, y_root=1.20, y_tip=4.80,
+           le_root=-2.30, le_tip=-5.90, te_root=-7.35, te_tip=-6.95,
            thickness=0.045)
-TIP_POD = dict(x=7.32, y=1.12, z_front=-2.25, z_back=-5.78, r=0.075)
+TIP_POD = dict(x=7.32, y=1.24, z_front=-2.25, z_back=-5.78, r=0.10)
 
 
 def interp(table, z):
@@ -148,6 +157,13 @@ def hull_exponent(z: float) -> float:
 
 
 # ------------------------------------------------------------------- surfaces
+def shoulder(y: float) -> float:
+    """Head-on drawing: the hull is wide at the wing shoulder and pinches in
+    above it, so the canopy sits on a narrow spine instead of a barrel."""
+    t = min(max((y - 1.30) / 1.05, 0.0), 1.0)
+    return 1.0 - 0.20 * t * t * (3.0 - 2.0 * t)
+
+
 def section_ring(z, hw, top, bot, n, count=56):
     cy = (top + bot) / 2.0
     hh = (top - bot) / 2.0
@@ -157,7 +173,7 @@ def section_ring(z, hw, top, bot, n, count=56):
         ct, st = math.cos(t), math.sin(t)
         x = hw * math.copysign(abs(ct) ** (2.0 / n), ct)
         y = cy + hh * math.copysign(abs(st) ** (2.0 / n), st)
-        pts.append(v(x, y, z))
+        pts.append(v(x * shoulder(y), y, z))
     return pts
 
 
@@ -166,7 +182,7 @@ _z = np.linspace(TAIL_Z, NOSE_Z, 150)
 for _zi in _z:
     _zi = float(_zi)
     STATIONS.append((_zi, interp(HALF_WIDTH, _zi), interp(TOP_LINE, _zi),
-                     max(0.02, interp(SIDE_BOT, _zi)), hull_exponent(_zi)))
+                     max(0.02, interp(KEEL, _zi)), hull_exponent(_zi)))
 STATIONS.sort(key=lambda s: -s[0])
 
 
@@ -245,8 +261,8 @@ def build_fuselage(mesh: Mesh) -> None:
 
 # --------------------------------------------------------------------- canopy
 CANOPY_SECTIONS = [
-    (7.35, 2.26), (6.85, 2.52), (6.30, 2.69), (5.80, 2.78), (5.30, 2.84),
-    (4.80, 2.88), (4.30, 2.89), (3.80, 2.86),
+    (7.35, 2.28), (6.85, 2.56), (6.30, 2.74), (5.80, 2.84), (5.30, 2.89),
+    (4.80, 2.92), (4.30, 2.92), (3.80, 2.88),
 ]
 
 
@@ -260,7 +276,7 @@ def canopy_ring(z: float, crown: float, n: int = 26, scale: float = 1.0):
     ring = []
     for k in range(n + 1):
         t = math.pi * k / n
-        y = base + (crown - base) * max(0.0, math.sin(t)) ** 0.65
+        y = base + (crown - base) * max(0.0, math.sin(t)) ** 1.50
         ring.append(v(hw * math.cos(t), y, z))
     return ring
 
@@ -341,9 +357,13 @@ def build_cockpit(mesh: Mesh) -> None:
 
 
 # ---------------------------------------------------------------------- wings
+WING_LE_AT = 1.55      # anchor station the traced LE line is quoted at
+
+
 def wing_le(x: float) -> float:
+    """Leading edge line traced off the top view (42.8 deg sweep)."""
     w = WING
-    return w["le_root"] - (x - w["root_x"]) * w["le_slope"]
+    return w["le_root"] - (x - WING_LE_AT) * w["le_slope"]
 
 
 def wing_te(x: float) -> float:
@@ -412,14 +432,34 @@ def build_wings(mesh: Mesh) -> None:
                       TIP_POD["r"] * 0.82, 0.04, segments=14)
 
 
+def canard_le(x: float) -> float:
+    c = CANARD
+    return c["le_root"] - (x - 1.55) * (c["le_root"] - c["le_tip"]) / (c["tip_x"] - 1.55)
+
+
+def canard_te(x: float) -> float:
+    c = CANARD
+    return c["te_root"] - (x - 1.55) * (c["te_root"] - c["te_tip"]) / (c["tip_x"] - 1.55)
+
+
+def stab_le(x: float) -> float:
+    s_ = STAB
+    return s_["le_root"] - (x - 1.85) * (s_["le_root"] - s_["le_tip"]) / (s_["tip_x"] - 1.85)
+
+
+def stab_te(x: float) -> float:
+    s_ = STAB
+    return s_["te_root"] - (x - 1.85) * (s_["te_root"] - s_["te_tip"]) / (s_["tip_x"] - 1.85)
+
+
 def build_canards(mesh: Mesh) -> None:
     c = CANARD
     for side in (-1, 1):
         sections = []
         for f in (0.0, 0.5, 1.0):
             x = c["root_x"] + (c["tip_x"] - c["root_x"]) * f
-            le = c["le_root"] + (c["le_tip"] - c["le_root"]) * f
-            te = c["te_root"] + (c["te_tip"] - c["te_root"]) * f
+            le = canard_le(x)
+            te = canard_te(x)
             sections.append({"le": v(side * x, c["y"], le), "chord": le - te,
                              "thickness": c["thickness"]})
         p = lifting_surface(mesh, "Su34_Canard_L" if side < 0 else "Su34_Canard_R",
@@ -435,8 +475,8 @@ def build_stabilators(mesh: Mesh) -> None:
         sections = []
         for f in (0.0, 0.45, 0.78, 1.0):
             x = s["root_x"] + (s["tip_x"] - s["root_x"]) * f
-            le = s["le_root"] + (s["le_tip"] - s["le_root"]) * f
-            te = s["te_root"] + (s["te_tip"] - s["te_root"]) * f
+            le = stab_le(x)
+            te = stab_te(x)
             sections.append({"le": v(side * x, s["y"], le), "chord": le - te,
                              "thickness": s["thickness"]})
         p = lifting_surface(mesh, "Su34_Stab_L" if side < 0 else "Su34_Stab_R",
@@ -449,7 +489,7 @@ def build_stabilators(mesh: Mesh) -> None:
         el = []
         for f in (0.25, 1.0):
             x = s["root_x"] + (s["tip_x"] - s["root_x"]) * f
-            te = s["te_root"] + (s["te_tip"] - s["te_root"]) * f
+            te = stab_te(x)
             c = 0.42 - 0.20 * f
             el.append({"le": v(side * x, s["y"] - 0.008, te + c),
                        "chord": c, "thickness": 0.042})
@@ -512,23 +552,37 @@ def build_engines(mesh: Mesh) -> None:
     for side in (-1, 1):
         x = side * 1.18
         # intake lip on the side of the forward fuselage, throat recessed
+        # intake lip on the nose of each trunk, not on the hull side
         mesh.cylinder("Su34_IntakeFace", "Su34_Intake",
-                      v(side * 1.52, 1.08, 2.30), v(side * 1.52, 1.08, 2.06),
-                      0.44, 0.42, segments=20, caps=True, smooth=False)
+                      v(side * 1.16, 0.72, 2.12), v(side * 1.16, 0.72, 1.84),
+                      0.50, 0.46, segments=20, caps=True, smooth=False)
         mesh.cylinder("Su34_IntakeLip", "Su34_Metal",
-                      v(side * 1.52, 1.08, 2.37), v(side * 1.52, 1.08, 2.29),
-                      0.48, 0.46, segments=20, caps=False)
-        mesh.box("Su34_IntakeSplitter", "Su34_Metal",
-                 v(side * 1.94, 1.08, 2.44), (0.09, 0.80, 0.24))
+                      v(side * 1.16, 0.72, 2.26), v(side * 1.16, 0.72, 2.10),
+                      0.54, 0.51, segments=20, caps=False)
         # nacelle fairing along the lower side of the hull
         rings = []
-        for z, r in ((1.90, 0.46), (0.60, 0.56), (-2.00, 0.60), (-4.00, 0.62),
-                     (-6.00, 0.58), (-7.60, 0.50)):
-            rings.append(section_ring(z, r, 1.46, 0.26, 2.1, 22))
-        rings = [[p + v(x, 0.0, 0) for p in r] for r in rings]
+        for z, hw, top, bot in ((2.30, 0.50, 1.22, 0.50), (1.60, 0.56, 1.24, 0.16),
+                                (-0.50, 0.57, 1.26, 0.02), (-3.00, 0.58, 1.28, 0.03),
+                                (-5.50, 0.60, 1.30, 0.10), (-7.20, 0.62, 1.30, 0.18),
+                                (-8.30, 0.58, 1.26, 0.26)):
+            rings.append([v(q[0] + side * 1.16, q[1], q[2])
+                          for q in section_ring(z, hw, top, bot, 4.0, 24)])
         p = mesh.loft("Su34_Nacelle_L" if side < 0 else "Su34_Nacelle_R",
-                      "Su34_Camo", rings, cap_start=False, cap_end=False)
-        mesh.orient(p, lambda c_, s=side: v(s * 1.18, 0.98, c_[2]))
+                      "Su34_Camo", rings, cap_start=True, cap_end=True)
+        mesh.orient(p, lambda c_, s=side: v(s * 1.16, 0.60, c_[2]))
+
+        # wing-root shoulder: the head-on drawing is 2.2 m wide at the wing
+        # station, wider than the trunks, because the wing fairing blends the
+        # nacelle into the root.  It hides under the wing in plan view.
+        shoulder_rings = []
+        for z, hw, top, bot in ((1.30, 0.18, 1.30, 0.95), (0.60, 0.30, 1.32, 0.86),
+                                (-2.00, 0.31, 1.34, 0.86), (-4.50, 0.30, 1.32, 0.90),
+                                (-5.60, 0.20, 1.28, 0.98)):
+            shoulder_rings.append([v(q[0] + side * 1.86, q[1], q[2])
+                                   for q in section_ring(z, hw, top, bot, 3.2, 18)])
+        p = mesh.loft("Su34_RootFairing_L" if side < 0 else "Su34_RootFairing_R",
+                      "Su34_Camo", shoulder_rings, cap_start=True, cap_end=True)
+        mesh.orient(p, lambda c_, s=side: v(s * 1.86, 1.08, c_[2]))
 
         # nozzle: petals plus a dark throat
         mesh.cylinder("Su34_NozzleShell_L" if side < 0 else "Su34_NozzleShell_R",
