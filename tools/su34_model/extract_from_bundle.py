@@ -23,7 +23,11 @@ description. The procedural model in this repository has no such restriction.
 
 Usage
 -----
-    # what is inside a bundle?
+    # which subscribed pack contains a Su-34?
+    python3 tools/su34_model/extract_from_bundle.py --scan \
+        "<Steam>/steamapps/workshop/content/3018410"
+
+    # what is inside one bundle?
     python3 tools/su34_model/extract_from_bundle.py --list "<folder or .bundle>"
 
     # export the mesh whose name matches a substring
@@ -33,6 +37,8 @@ Usage
 
 Options
 -------
+    --scan ROOT         walk every workshop item under ROOT and report which
+                        ones contain the mesh (start here if unsure)
     --list              only print the meshes/textures found, do not export
     --mesh SUBSTR       case-insensitive substring of the mesh name
     --out PATH          output OBJ (textures are written next to it)
@@ -138,11 +144,89 @@ def export_obj(path: str, verts, uvs, tris, flip_x: bool, scale: float) -> None:
 
 
 # ------------------------------------------------------------------------ main
+def scan_workshop(root: str, wanted: str, max_items: int = 0) -> None:
+    """Walk every subscribed workshop item and report which ones have the mesh.
+
+    Nobody remembers which pack a mesh came from, and the folders are named by
+    a numeric item id, so guessing is hopeless. This prints one line per item
+    folder with the number of meshes, how many match, and the biggest mesh -
+    enough to spot the right pack in a list of fifty.
+    """
+    # Accept either .../content/3018410 or .../workshop/content - the latter is
+    # the folder people usually have open in Explorer.
+    nested = os.path.join(root, "3018410")
+    if os.path.isdir(nested) and not any(
+            d.isdigit() for d in os.listdir(root) if os.path.isdir(os.path.join(root, d))):
+        root = nested
+
+    stem = re.sub(r"[^a-z0-9]", "", wanted.lower())
+    items = sorted(
+        d for d in os.listdir(root)
+        if os.path.isdir(os.path.join(root, d)) and d.isdigit()
+    )
+    if not items:
+        print("no numeric item folders under", root)
+        print("expected: <Steam>/steamapps/workshop/content/3018410/<item id>/")
+        return
+    if max_items:
+        items = items[:max_items]
+
+    print("scanning %d workshop item(s) under %s" % (len(items), root))
+    print("%-14s %7s %8s  %s" % ("item id", "meshes", "matches", "biggest mesh"))
+    print("-" * 78)
+
+    hits = []
+    for index, item in enumerate(items, 1):
+        folder = os.path.join(root, item)
+        meshes = []
+        for path in iter_files(folder):
+            env = load_environment(path)
+            if env is None:
+                continue
+            for obj in env.objects:
+                try:
+                    if obj.type.name != "Mesh":
+                        continue
+                    mesh = obj.read()
+                except Exception:
+                    continue
+                name = str(getattr(mesh, "m_Name", "") or "")
+                verts, _uvs, tris = mesh_vertices(mesh)
+                if verts:
+                    meshes.append((name, len(verts), len(tris), path))
+        matches = [m for m in meshes if stem and stem in re.sub(r"[^a-z0-9]", "", m[0].lower())]
+        biggest = max(meshes, key=lambda m: m[1]) if meshes else None
+        print("%-14s %7d %8d  %s" % (
+            item, len(meshes), len(matches),
+            ("%s (%d v)" % (biggest[0][:36], biggest[1])) if biggest else "-"))
+        if matches:
+            hits.append((item, folder, matches))
+
+    print("-" * 78)
+    if not hits:
+        print("no mesh matched %r. Re-run with a broader --mesh (try 'su', 'fullback', '34')." % wanted)
+        return
+    print("item ids above are the numbers at the end of a workshop URL: "
+          "https://steamcommunity.com/sharedfiles/filedetails/?id=<id>")
+    print("matches:")
+    for item, folder, matches in hits:
+        print("  %s  ->  %s" % (item, folder))
+        for name, nv, nt, path in matches:
+            print("      %-44s %6d verts %6d tris" % (name[:44], nv, nt))
+    print("\nnext: python3 tools/su34_model/extract_from_bundle.py --mesh %r "
+          "--bundle \"<one of the folder paths above>\" --out incoming/su34_pack.obj" % wanted)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--bundle", dest="bundle", default=None,
                     help="folder or bundle file to inspect")
+    ap.add_argument("--scan", default=None, metavar="WORKSHOP_ROOT",
+                    help="walk every workshop item under this folder and report "
+                         "which ones contain the wanted mesh")
+    ap.add_argument("--max-items", type=int, default=0,
+                    help="with --scan, stop after N item folders (0 = all)")
     ap.add_argument("--list", action="store_true", help="only list the contents")
     ap.add_argument("--mesh", default="su-34", help="substring of the mesh name")
     ap.add_argument("--out", default="assets/model/su34_imported.obj")
@@ -150,6 +234,12 @@ def main() -> None:
                     help="keep Unity's handedness")
     ap.add_argument("--scale", type=float, default=1.0)
     args = ap.parse_args()
+
+    if args.scan:
+        if not os.path.isdir(args.scan):
+            raise SystemExit("--scan needs a folder, got: %s" % args.scan)
+        scan_workshop(args.scan, args.mesh, args.max_items)
+        return
 
     target = args.bundle or os.environ.get("VTOL_WORKSHOP_DIR")
     if not target:
