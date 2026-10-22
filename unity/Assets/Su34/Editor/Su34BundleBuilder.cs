@@ -200,6 +200,21 @@ namespace Su34.EditorTools
             "throttle", "panel", "switch", "button", "helmet", "pilot", "glove"
         };
 
+        // ...but the donor's own furniture is not: the Su-34 mesh has seats,
+        // a canopy and a cockpit tub of its own, and two overlapping interiors
+        // read as a mess. The seat *rigs* (components) stay - only their
+        // renderers go. Hands, gloves and helmets are never hidden, so the
+        // pilot still has VR presence.
+        private static readonly string[] HideOverrideKeywords =
+        {
+            "seat", "chair", "cushion", "canopy", "headrest"
+        };
+
+        private static readonly string[] NeverHideKeywords =
+        {
+            "helmet", "glove", "hand"
+        };
+
         // ------------------------------------------------------------------ menu
         // The OBJ, its MTL and the PNG textures live in the repository
         // (assets/model). Unity's OBJ importer resolves "textures/foo.png"
@@ -836,9 +851,20 @@ namespace Su34.EditorTools
                 return;
             }
 
-            // Bring the donor's cockpit group to our cockpit station first, so
-            // its MFDs, HUD and switches sit in front of the crew instead of
-            // staying at the donor's own (much shorter) fuselage position.
+            Vector3[] anchors = { PilotSeatAnchor, WsoSeatAnchor };
+
+            // Bring the donor's instruments to our cockpit, station by station.
+            //
+            // Every vanilla two-seater is tandem, so the donor prefab carries
+            // two complete work stations one behind the other: front (pilot:
+            // HUD, stick, throttle, MFDs) and rear (WSO / instructor, its own
+            // MFDs and controls). Moving the whole cockpit group as one block
+            // would leave those two stations in a line again - the WSO seat
+            // would have nothing in front of it and the rear station would end
+            // up behind the pilot's back. So the group is split: every object
+            // is assigned to the seat it sits closest to, and each station is
+            // translated onto its own chair. Nothing is duplicated, so no
+            // networked component is cloned and no reference breaks.
             if (MoveDonorCockpitToSu34 && rigs.Count > 0)
             {
                 var seatTransforms = new List<Transform>();
@@ -849,22 +875,25 @@ namespace Su34.EditorTools
                 {
                     report.Add("donor cockpit group not moved (seat rigs sit directly under the vehicle root)");
                 }
+                else if (rigs.Count >= 2)
+                {
+                    DistributeCockpitStations(root, cockpit, rigs, anchors, report);
+                }
                 else
                 {
+                    // single-seat donor: nothing to split, move it as a block
                     Vector3 pilotNow = root.transform.InverseTransformPoint(rigs[0].transform.position);
                     Vector3 delta = PilotSeatAnchor - pilotNow;
                     if (delta.magnitude > 0.02f)
                     {
                         cockpit.position += root.transform.TransformVector(delta);
                         report.Add(string.Format(
-                            "donor cockpit group moved: {0} by ({1:0.00}, {2:0.00}, {3:0.00}) so the " +
-                            "front seat lands on the Su-34 pilot chair",
+                            "donor cockpit group moved: {0} by ({1:0.00}, {2:0.00}, {3:0.00})",
                             GetPath(root.transform, cockpit), delta.x, delta.y, delta.z));
                     }
                 }
             }
 
-            Vector3[] anchors = { PilotSeatAnchor, WsoSeatAnchor };
             int moves = Mathf.Min(rigs.Count, anchors.Length);
             for (int i = 0; i < moves; i++)
             {
@@ -891,6 +920,139 @@ namespace Su34.EditorTools
             {
                 report.Add("two crew seats aligned side by side: pilot left, WSO right");
             }
+        }
+
+        // Words that mark a node as cockpit equipment rather than airframe. The
+        // splitter never touches a subtree without one of these, so a wide
+        // common ancestor (one that happens to contain a wing) cannot start
+        // disassembling the jet.
+        private static readonly string[] CockpitWords =
+        {
+            "cockpit", "interior", "mfd", "hud", "stick", "throttle", "panel", "switch",
+            "button", "display", "instrument", "console", "lever", "grip", "joystick",
+            "screen", "seat", "helmet", "glove", "hand", "canopy", "cdu", "ufc"
+        };
+
+        // How far from a seat an object may sit and still be counted as part of
+        // that station. A cockpit is about 2 m long; anything further away is
+        // fuselage, not equipment.
+        private const float StationRadius = 3.2f;
+
+        /// <summary>
+        /// Splits the donor cockpit into two station groups (front / rear) and
+        /// moves each onto its own seat, so a tandem cockpit becomes a
+        /// side-by-side one without duplicating any component.
+        /// </summary>
+        private static void DistributeCockpitStations(GameObject root, Transform cockpit,
+                                                      List<SeatRig> rigs, Vector3[] anchors,
+                                                      List<string> report)
+        {
+            int count = Mathf.Min(rigs.Count, anchors.Length);
+            Vector3[] seatLocal = new Vector3[count];
+            Vector3[] delta = new Vector3[count];
+            for (int i = 0; i < count; i++)
+            {
+                seatLocal[i] = root.transform.InverseTransformPoint(rigs[i].transform.position);
+                delta[i] = anchors[i] - seatLocal[i];
+            }
+
+            var skip = new HashSet<Transform>();
+            foreach (var rig in rigs) if (rig.transform != null) skip.Add(rig.transform);
+
+            int moved = 0, already = 0, groups = 0;
+            var stack = new Stack<Transform>();
+            for (int i = cockpit.childCount - 1; i >= 0; i--) stack.Push(cockpit.GetChild(i));
+
+            while (stack.Count > 0)
+            {
+                Transform node = stack.Pop();
+                if (node == null || skip.Contains(node)) continue;   // seat rigs move on their own
+
+                int station = ClassifyStation(root, node, seatLocal);
+                if (station >= 0)
+                {
+                    groups++;
+                    if (delta[station].magnitude > 0.005f)
+                    {
+                        node.position += root.transform.TransformVector(delta[station]);
+                        moved++;
+                        if (groups <= 40)
+                            report.Add(string.Format("station {0}: {1} -> by ({2:0.00}, {3:0.00}, {4:0.00})",
+                                station == 0 ? "pilot (left)" : "wso (right)",
+                                GetPath(root.transform, node), delta[station].x, delta[station].y, delta[station].z));
+                    }
+                    else
+                    {
+                        already++;
+                    }
+                    continue;   // handled as a unit, children follow
+                }
+
+                for (int i = 0; i < node.childCount; i++) stack.Push(node.GetChild(i));
+            }
+
+            report.Add(string.Format(
+                "cockpit split into stations: {0} groups moved, {1} already in place " +
+                "(pilot station {2:0.00}, {3:0.00}, {4:0.00} / wso station {5:0.00}, {6:0.00}, {7:0.00} from their old seats)",
+                moved, already,
+                delta[0].x, delta[0].y, delta[0].z,
+                delta[count > 1 ? 1 : 0].x, delta[count > 1 ? 1 : 0].y, delta[count > 1 ? 1 : 0].z));
+            Debug.Log("[Su-34] cockpit split: " + moved + " groups moved, " + already + " in place");
+
+            if (moved == 0)
+                Debug.LogWarning("[Su-34] no cockpit group could be assigned to a seat - check " +
+                                 "Su34_donor_hierarchy.txt and the build report");
+        }
+
+        /// <summary>
+        /// Which seat does this subtree belong to? -1 means "mixed, no geometry,
+        /// or not cockpit equipment" - the caller then looks one level deeper.
+        /// </summary>
+        private static int ClassifyStation(GameObject root, Transform node, Vector3[] seatLocal)
+        {
+            if (!HasCockpitWord(node)) return -1;
+
+            var renderers = node.GetComponentsInChildren<Renderer>(true);
+            if (renderers.Length == 0) return -1;
+
+            int station = -1;
+            int counted = 0;
+            foreach (var r in renderers)
+            {
+                if (r == null || !r.enabled) continue;
+                Vector3 p = root.transform.InverseTransformPoint(r.bounds.center);
+
+                int nearest = -1;
+                float best = float.MaxValue;
+                for (int i = 0; i < seatLocal.Length; i++)
+                {
+                    float d = (p - seatLocal[i]).sqrMagnitude;
+                    if (d < best) { best = d; nearest = i; }
+                }
+                if (nearest < 0) return -1;
+                if (best > StationRadius * StationRadius) return -1;   // fuselage, not equipment
+
+                if (station < 0) station = nearest;
+                else if (station != nearest) return -1;                 // straddles both seats
+                counted++;
+            }
+            return counted > 0 ? station : -1;
+        }
+
+        private static bool HasCockpitWord(Transform node)
+        {
+            if (ContainsCockpitWord(node.name)) return true;
+            foreach (var t in node.GetComponentsInChildren<Transform>(true))
+                if (t != node && ContainsCockpitWord(t.name)) return true;
+            return false;
+        }
+
+        private static bool ContainsCockpitWord(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return false;
+            foreach (string w in CockpitWords)
+                if (name.IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            return false;
         }
 
         // Each donor seat rig is re-parented under an empty marker
@@ -972,6 +1134,12 @@ namespace Su34.EditorTools
 
                 bool keep = KeepVisibleKeywords.Any(k =>
                     path.IndexOf(k, StringComparison.OrdinalIgnoreCase) >= 0);
+
+                bool neverHide = NeverHideKeywords.Any(k =>
+                    path.IndexOf(k, StringComparison.OrdinalIgnoreCase) >= 0);
+                bool hideOverride = HideOverrideKeywords.Any(k =>
+                    path.IndexOf(k, StringComparison.OrdinalIgnoreCase) >= 0);
+                if (hideOverride && !neverHide) keep = false;
 
                 if (keep)
                 {
