@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Су-34 — предпросмотр кабины</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #0b0e13; overflow: hidden;
+               font: 13px/1.45 -apple-system, "Segoe UI", Roboto, sans-serif; color: #cdd6e2; }
+  #view { display: block; width: 100%; height: 100%; }
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  .panel { position: absolute; pointer-events: auto; background: rgba(12,16,22,.86);
+           border: 1px solid #232c38; border-radius: 10px; padding: 10px 12px;
+           backdrop-filter: blur(6px); }
+  #left { top: 12px; left: 12px; width: 244px; }
+  #right { top: 12px; right: 12px; width: 230px; }
+  #bottom { left: 50%; transform: translateX(-50%); bottom: 12px; padding: 8px 14px; }
+  h1 { font-size: 13px; margin: 0 0 8px; letter-spacing: .04em; text-transform: uppercase;
+       color: #7f8ea3; font-weight: 600; }
+  button { width: 100%; text-align: left; background: #151b24; color: #d6e0ec; border: 1px solid #263140;
+           border-radius: 7px; padding: 7px 9px; margin-bottom: 5px; cursor: pointer; font-size: 13px; }
+  button:hover { background: #1b2430; border-color: #35465c; }
+  button.on { background: #1d2c3f; border-color: #3f6b96; color: #dcecff; }
+  kbd { background: #1d2531; border: 1px solid #2e3a4a; border-radius: 4px; padding: 0 4px; font-size: 11px; }
+  .row { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+  .row label { flex: 1; color: #97a6ba; }
+  input[type=range] { width: 92px; }
+  .muted { color: #6f7f93; font-size: 12px; }
+  #status { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+            text-align: center; color: #8fa3bc; }
+  .swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; }
+</style>
+</head>
+<body>
+<canvas id="view"></canvas>
+<div id="hud">
+  <div class="panel" id="left">
+    <h1>Точка обзора</h1>
+    <button data-view="pilot">Пилот (левое кресло)</button>
+    <button data-view="wso">Штурман (правое кресло)</button>
+    <button data-view="panel">Пилот: приборная панель</button>
+    <button data-view="right">Пилот: взгляд вправо</button>
+    <button data-view="behind">Сзади — оба кресла</button>
+    <button data-view="chase">Снаружи (общий вид)</button>
+    <div class="row"><label>рост/высота глаз</label><input id="eye" type="range" min="1.55" max="2.66" step="0.01" value="2.22"></div>
+    <div class="row"><label>вперёд/назад</label><input id="fwd" type="range" min="-0.35" max="0.35" step="0.01" value="0"></div>
+  </div>
+
+  <div class="panel" id="right">
+    <h1>Показ</h1>
+    <button id="t-ext" class="on">Корпус снаружи</button>
+    <button id="t-cockpit" class="on">Интерьер кабины</button>
+    <button id="t-canopy" class="on">Фонарь (стекло)</button>
+    <button id="t-seats" class="on">Сиденья и маркеры</button>
+    <button id="t-gear">Шасси</button>
+    <h1 style="margin-top:12px">Прозрачность</h1>
+    <div class="row"><label>фонарь</label><input id="canopy-alpha" type="range" min="0" max="1" step="0.02" value="0.28"></div>
+    <div class="row"><label>корпус</label><input id="hull-alpha" type="range" min="0" max="1" step="0.02" value="1"></div>
+  </div>
+
+  <div class="panel" id="bottom">
+    <span class="muted">ЛКМ — вращать · колесо — приблизить · ПКМ/Shift — двигаться ·
+    <kbd>1</kbd>–<kbd>6</kbd> — точки обзора</span>
+  </div>
+  <div id="status">Загружаю модель…</div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.js" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OBJLoader } from './vendor/loaders/OBJLoader.js';
+
+const MODEL = '../../assets/model/su34_donor.obj';
+const MTL   = '../../assets/model/su34_donor.mtl';
+
+// Same numbers as tools/seat_check.py and Su34BundleBuilder.cs
+const PILOT = new THREE.Vector3(-0.52, 1.45, 6.30);
+const WSO   = new THREE.Vector3( 0.52, 1.45, 6.30);
+// Cushion top is y 1.52 and the HUD combiner sits at y 2.11..2.35, so the
+// eye has to be at that height to look through it.
+const EYE_HEIGHT = 2.22;
+const EYE_Z = 6.22;
+
+const PARTS = {
+  hull:    ['Su-34-airframe'],
+  cockpit: ['Su-34-cockpit'],
+  canopy:  ['Su-34-canopy', 'Su-34-instrGlass'],
+  hud:     ['Su-34-hud'],
+  gearOff: ['Su34_GearlandingOff'],
+  gearOn:  ['Su34_GearlandingOn'],
+  lights:  ['Su34_GearlandingOnLight'],
+};
+
+const canvas = document.getElementById('view');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+} catch (e) {
+  document.getElementById('status').textContent =
+    'Браузер не дал WebGL: ' + e.message + '. Включите аппаратное ускорение.';
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0e13);
+scene.fog = new THREE.Fog(0x0b0e13, 26, 48);
+
+const camera = new THREE.PerspectiveCamera(72, 1, 0.02, 400);
+camera.position.set(-0.52, EYE_HEIGHT, EYE_Z);
+
+// ---------------------------------------------------------------- lighting
+scene.add(new THREE.HemisphereLight(0xbcd4f0, 0x2b3038, 0.55));
+const key = new THREE.DirectionalLight(0xfff2e0, 2.1);
+key.position.set(-6, 12, 9);
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x9fc4ff, 0.85);
+rim.position.set(7, 5, -11);
+scene.add(rim);
+const cockpitFill = new THREE.PointLight(0xffe6c0, 2.2, 6, 2);
+cockpitFill.position.set(0, 2.5, 7.4);
+scene.add(cockpitFill);
+
+// ------------------------------------------------------------- trackball
+const target = new THREE.Vector3(-0.52, 1.62, 6.8);
+let radius = 0.9;
+
+function applyOrbit() {
+  const dir = camera.position.clone().sub(target);
+  camera.lookAt(target);
+}
+applyOrbit();
+
+let dragging = 0, lastX = 0, lastY = 0;
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('pointerdown', e => {
+  dragging = e.button === 2 || e.shiftKey ? 2 : 1;
+  lastX = e.clientX; lastY = e.clientY;
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointerup', () => { dragging = 0; });
+canvas.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+
+  const offset = camera.position.clone().sub(target);
+  if (dragging === 1) {
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    spherical.theta -= dx * 0.005;
+    spherical.phi = Math.max(0.05, Math.min(Math.PI - 0.05, spherical.phi - dy * 0.005));
+    offset.setFromSpherical(spherical);
+    camera.position.copy(target).add(offset);
+  } else {
+    const right = new THREE.Vector3().crossVectors(camera.up, offset).normalize();
+    const up = offset.clone().normalize().cross(right).normalize();
+    target.addScaledVector(right, dx * 0.0016 * offset.length());
+    target.addScaledVector(up, dy * 0.0016 * offset.length());
+    camera.position.copy(target).add(offset);
+  }
+  camera.lookAt(target);
+});
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const offset = camera.position.clone().sub(target);
+  const scale = Math.exp(e.deltaY * 0.0012);
+  const len = THREE.MathUtils.clamp(offset.length() * scale, 0.12, 60);
+  offset.setLength(len);
+  camera.position.copy(target).add(offset);
+  camera.lookAt(target);
+}, { passive: false });
+
+// ------------------------------------------------------------------- load
+const status = document.getElementById('status');
+const groups = {};
+let model = null;
+
+const TEX = new URL('../../assets/model/textures/', location.href).href;
+const loader = new THREE.TextureLoader();
+const tex = (file, srgb) => {
+  const t = loader.load(TEX + file);
+  t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  return t;
+};
+
+// The donated asset has four materials. They are rebuilt here with the same
+// rules as Unity's Standard shader in Su34Materials.cs, so this preview and the
+// in-game look are driven by the same maps.
+const baseColor = tex('donor_basecolor.png', true);
+const normalMap = tex('donor_normal.png', false);
+const roughnessMap = tex('donor_roughness.png', false);
+
+const M = {
+  airframe: new THREE.MeshStandardMaterial({
+    map: baseColor, normalMap, roughnessMap,
+    metalness: 0.15, roughness: 1.0, side: THREE.DoubleSide,
+  }),
+  glass: new THREE.MeshPhysicalMaterial({
+    color: 0xa9c9d8, transparent: true, opacity: 0.26, roughness: 0.06,
+    metalness: 0.0, side: THREE.DoubleSide, depthWrite: false,
+    clearcoat: 1.0, clearcoatRoughness: 0.05,
+  }),
+  hud: new THREE.MeshStandardMaterial({
+    color: 0x2ad84a, emissive: 0x0d7a1e, emissiveIntensity: 1.0,
+    transparent: true, opacity: 0.55, side: THREE.DoubleSide, depthWrite: false,
+  }),
+  lights: new THREE.MeshStandardMaterial({
+    color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 3.0, side: THREE.DoubleSide,
+  }),
+};
+
+const MATERIAL_FOR = {
+  'Su-34-airframe': 'airframe',
+  'Su-34-cockpit': 'airframe',
+  'Su34_GearlandingOff': 'airframe',
+  'Su34_GearlandingOn': 'airframe',
+  'Su-34-canopy': 'glass',
+  'Su-34-instrGlass': 'glass',
+  'Su-34-hud': 'hud',
+  'Su34_GearlandingOnLight': 'lights',
+};
+
+new OBJLoader().load(MODEL, (obj) => {
+  model = obj;
+  obj.traverse((child) => {
+    if (!child.isMesh) return;
+    const key = MATERIAL_FOR[child.name] || 'airframe';
+    child.material = M[key];
+    if (key === 'glass' || key === 'hud') child.renderOrder = 5;
+    for (const [group, names] of Object.entries(PARTS)) {
+      if (names.includes(child.name)) (groups[group] ||= []).push(child);
+    }
+  });
+  scene.add(obj);
+  buildMarkers();
+  setView('pilot');
+  status.style.display = 'none';
+}, (evt) => {
+  if (evt.total) {
+    status.textContent = 'Загружаю модель… ' + Math.round(evt.loaded / evt.total * 100) + '%';
+  }
+}, (err) => {
+  status.textContent = 'Не удалось загрузить модель: ' + err;
+  console.error(err);
+});
+
+// ---------------------------------------------------------------- markers
+const markerGroup = new THREE.Group();
+scene.add(markerGroup);
+
+function crossMark(pos, color, label) {
+  const g = new THREE.Group();
+  const mat = new THREE.LineBasicMaterial({ color, depthTest: false, transparent: true, opacity: 0.95 });
+  const r = 0.075;
+  const pts = [
+    new THREE.Vector3(-r, 0, 0), new THREE.Vector3(r, 0, 0),
+    new THREE.Vector3(0, -r, 0), new THREE.Vector3(0, r, 0),
+    new THREE.Vector3(0, 0, -r), new THREE.Vector3(0, 0, r),
+  ];
+  const geo = new THREE.BufferGeometry().setFromPoints(pts);
+  const line = new THREE.LineSegments(geo, mat);
+  line.renderOrder = 999;
+  g.add(line);
+  g.position.copy(pos);
+
+  const sprite = makeLabel(label, color);
+  sprite.position.set(0, 0.13, 0);
+  g.add(sprite);
+  return g;
+}
+
+function makeLabel(text, color) {
+  const c = document.createElement('canvas');
+  c.width = 256; c.height = 64;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(8,12,18,.8)';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
+  ctx.font = 'bold 30px -apple-system, Segoe UI, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(text, c.width / 2, c.height / 2);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+  sprite.scale.set(0.34, 0.085, 1);
+  sprite.renderOrder = 1000;
+  return sprite;
+}
+
+function buildMarkers() {
+  markerGroup.clear();
+  markerGroup.add(crossMark(PILOT, 0x4ea3ff, 'ПИЛОТ'));
+  markerGroup.add(crossMark(WSO, 0xff6b5e, 'ШТУРМАН'));
+  const eye = new THREE.Group();
+  eye.add(makeLabel('глаза', 0x9fb4cc));
+  eye.position.set(-0.52, EYE_HEIGHT, EYE_Z);
+  markerGroup.add(eye);
+}
+
+// ------------------------------------------------------------------- views
+const views = {
+  pilot:   { pos: [-0.52, EYE_HEIGHT, EYE_Z], look: [-0.52, EYE_HEIGHT - 0.17, 8.30] },
+  wso:     { pos: [ 0.52, EYE_HEIGHT, EYE_Z], look: [ 0.52, EYE_HEIGHT - 0.17, 8.30] },
+  panel:   { pos: [-0.52, EYE_HEIGHT, EYE_Z], look: [-0.52, EYE_HEIGHT - 0.85, 7.70] },
+  right:   { pos: [-0.52, EYE_HEIGHT, EYE_Z], look: [ 0.62, EYE_HEIGHT - 0.22, 6.60] },
+  behind:  { pos: [ 0.00, 2.52, 5.70], look: [ 0.00, 1.60, 6.95] },
+  chase:   { pos: [ 9.50, 5.20, 15.0], look: [ 0.00, 1.60, 4.00] },
+};
+
+function setView(name) {
+  const v = views[name];
+  if (!v) return;
+  const eye = parseFloat(document.getElementById('eye').value);
+  const fwd = parseFloat(document.getElementById('fwd').value);
+  const pos = new THREE.Vector3(...v.pos);
+  const look = new THREE.Vector3(...v.look);
+  if (name === 'pilot' || name === 'wso' || name === 'panel' || name === 'right') {
+    pos.y = eye;
+    pos.z += fwd;
+    look.y += (eye - EYE_HEIGHT) * 0.6;
+  }
+  camera.position.copy(pos);
+  target.copy(look);
+  camera.lookAt(target);
+  document.querySelectorAll('[data-view]').forEach(b => b.classList.toggle('on', b.dataset.view === name));
+}
+
+document.querySelectorAll('[data-view]').forEach(b =>
+  b.addEventListener('click', () => setView(b.dataset.view)));
+
+document.getElementById('eye').addEventListener('input', () => setView(currentView()));
+document.getElementById('fwd').addEventListener('input', () => setView(currentView()));
+
+function currentView() {
+  const btn = document.querySelector('[data-view].on');
+  return btn ? btn.dataset.view : 'pilot';
+}
+
+addEventListener('keydown', (e) => {
+  const map = { '1': 'pilot', '2': 'wso', '3': 'panel', '4': 'right', '5': 'behind', '6': 'chase' };
+  if (map[e.key]) setView(map[e.key]);
+});
+
+// ------------------------------------------------------------------ toggles
+function toggle(button, fn) {
+  button.addEventListener('click', () => {
+    button.classList.toggle('on');
+    fn(button.classList.contains('on'));
+  });
+}
+
+const setGroup = (group, visible) => (groups[group] || []).forEach(m => (m.visible = visible));
+
+toggle(document.getElementById('t-ext'), on => { setGroup('hull', on); setGroup('lights', on); });
+toggle(document.getElementById('t-cockpit'), on => setGroup('cockpit', on));
+toggle(document.getElementById('t-canopy'), on => setGroup('canopy', on));
+toggle(document.getElementById('t-seats'), on => (markerGroup.visible = on));
+toggle(document.getElementById('t-gear'), on => { setGroup('gearOff', !on); setGroup('gearOn', on); });
+setGroup('gearOn', false);
+// default hidden: we want to look at the aircraft, not the extended gear
+document.getElementById('t-gear').classList.remove('on');
+
+document.getElementById('canopy-alpha').addEventListener('input', (e) => {
+  M.glass.opacity = parseFloat(e.target.value);
+  M.glass.needsUpdate = true;
+});
+document.getElementById('hull-alpha').addEventListener('input', (e) => {
+  const a = parseFloat(e.target.value);
+  M.airframe.transparent = a < 0.999;
+  M.airframe.opacity = a;
+  M.airframe.depthWrite = a >= 0.999;
+  M.airframe.needsUpdate = true;
+});
+
+// ------------------------------------------------------------------ resize
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+renderer.setAnimationLoop(() => {
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

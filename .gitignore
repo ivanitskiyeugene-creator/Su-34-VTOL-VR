@@ -43,3 +43,8 @@ desktop.ini
 __pycache__/
 *.pyc
 .venv/
+
+# --- cockpit viewer --------------------------------------------------------
+# three.js is vendored (see tools/cockpit_viewer/README.md); node_modules here
+# would only duplicate it
+tools/cockpit_viewer/node_modules/
