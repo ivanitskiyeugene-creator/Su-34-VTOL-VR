@@ -425,6 +425,9 @@ namespace Su34.EditorTools
                 // ------------------------------------------- crew seat anchors
                 AddCrewAnchors(root, report);
 
+                // ---------------------------------------------------- flight model
+                Su34FlightModel.Apply(root, report);
+
                 // ------------------------------------------------------- save prefab
                 var saved = PrefabUtility.SaveAsPrefabAsset(root, OutputPrefabPath);
                 if (saved == null)
@@ -632,8 +635,13 @@ namespace Su34.EditorTools
         // the front seat. Set to false to keep the donor cockpit where it was.
         private const bool MoveDonorCockpitToSu34 = true;
 
-        private static readonly Vector3 PilotSeatAnchor = new Vector3(-0.30f, 1.15f, 6.40f);
-        private static readonly Vector3 WsoSeatAnchor = new Vector3(0.30f, 1.15f, 6.40f);
+        // Measured from the donated mesh itself (tools/seat_check.py prints the
+        // same numbers): each seat cushion is x -0.71..-0.34 and +0.34..+0.71,
+        // y 1.33..1.52, z 5.94..6.68. The old guessed values (±0.30, 1.15, 6.40)
+        // put both crew members between the two chairs, inside the centre
+        // console - 22 cm too narrow, 30 cm too low and 14 cm too far forward.
+        private static readonly Vector3 PilotSeatAnchor = new Vector3(-0.52f, 1.45f, 6.30f);
+        private static readonly Vector3 WsoSeatAnchor = new Vector3(0.52f, 1.45f, 6.30f);
 
         // Escape hatch: if auto-detection picks the wrong objects, copy the two
         // hierarchy paths from Su34_donor_hierarchy.txt here (relative to the
@@ -871,6 +879,8 @@ namespace Su34.EditorTools
                 Debug.Log("[Su-34] seat moved: " + line);
             }
 
+            WrapSeatsInMarkers(root, rigs, anchors, moves, report);
+
             if (moves < 2)
             {
                 report.Add("WARNING: only one crew seat on this donor - the second player cannot join. " +
@@ -880,6 +890,37 @@ namespace Su34.EditorTools
             else
             {
                 report.Add("two crew seats aligned side by side: pilot left, WSO right");
+            }
+        }
+
+        // Each donor seat rig is re-parented under an empty marker
+        // ("Su34_SeatPilot" / "Su34_SeatWso") that sits exactly on the chosen
+        // anchor. That gives the runtime a stable handle: src/Su34Mod/SeatTuner.cs
+        // moves the markers (and therefore the seats) using offsets from
+        // su34.cfg, so the seating can be nudged in game without rebuilding the
+        // bundle. Marker names must stay in sync with SeatTuner.MarkerNames.
+        private const string SeatMarkerPilot = "Su34_SeatPilot";
+        private const string SeatMarkerWso = "Su34_SeatWso";
+
+        private static void WrapSeatsInMarkers(GameObject root, List<SeatRig> rigs,
+                                               Vector3[] anchors, int count, List<string> report)
+        {
+            string[] names = { SeatMarkerPilot, SeatMarkerWso };
+            for (int i = 0; i < count && i < names.Length; i++)
+            {
+                Transform rig = rigs[i].transform;
+                if (rig == null || rig == root.transform) continue;
+
+                var existing = root.transform.Find(names[i]);
+                if (existing != null) UnityEngine.Object.DestroyImmediate(existing.gameObject);
+
+                var marker = new GameObject(names[i]);
+                marker.transform.SetParent(root.transform, false);
+                marker.transform.localPosition = anchors[i];
+                marker.transform.localRotation = Quaternion.identity;
+
+                rig.SetParent(marker.transform, true);   // keep the world position
+                report.Add("seat rig wrapped in marker: " + names[i]);
             }
         }
 
@@ -958,6 +999,12 @@ namespace Su34.EditorTools
             }
             return string.Join("/", stack);
         }
+
+        // Public wrappers so the other editor scripts (materials, flight model)
+        // can use the same paths and checks without duplicating the donor logic.
+        public static string DonorPrefabPath { get { return DonorPrefab; } }
+        public static bool CheckFilePublic(string assetPath) { return CheckFile(assetPath, assetPath); }
+        public static string PathOf(GameObject root, Transform t) { return GetPath(root.transform, t); }
 
         private static bool CheckFile(string assetPath, string what)
         {

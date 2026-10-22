@@ -161,78 +161,75 @@ namespace Su34Mod
     }
 
     /// <summary>
-    /// Applies the Su-34's real-world numbers on top of the donor airframe the
-    /// model was grafted onto, so it flies like a heavy strike fighter instead
-    /// of a light one. Everything is optional: if a field is missing on your
-    /// game build the step is skipped and logged.
-    /// Tune the values in su34.cfg next to the dll.
+    /// Runs the flight model pass once per aircraft the player climbs into.
+    ///
+    /// It has to happen at runtime rather than only in the prefab, because the
+    /// game rebuilds the vehicle (and its Rigidbody mass) every time a mission
+    /// starts or a loadout changes. See FlightModel.cs for the numbers.
     /// </summary>
     public class Su34FlightTuning : MonoBehaviour
     {
-        private const string CfgFile = "su34.cfg";
+        public static Su34Config Config;
 
-        public float MassKg = 26000f;
-        public float ThrustScale = 1.10f;
-        public float PitchAuthority = 0.95f;
-        public float RollAuthority = 0.92f;
-        public float YawAuthority = 1.05f;
-
+        private GameObject _vehicle;
         private bool _applied;
         private float _nextTry;
 
+        public static float CurrentMass { get; private set; }
+
         private void Update()
         {
+            if (Config == null) Config = Su34Config.Load();
+
+            var go = Compat.PlayerVehicleObject();
+            if (go == null)
+            {
+                _applied = false;
+                _vehicle = null;
+                return;
+            }
+            if (!Compat.IsSu34(go)) return;
+
+            if (go != _vehicle)
+            {
+                // new spawn: the game creates a fresh vehicle object each time
+                _vehicle = go;
+                _applied = false;
+                _nextTry = 0f;
+            }
+
             if (_applied || Time.unscaledTime < _nextTry) return;
             _nextTry = Time.unscaledTime + 1f;
 
-            var go = Compat.PlayerVehicleObject();
-            if (go == null || !Compat.IsSu34(go)) return;
-
             try
             {
-                LoadConfig();
+                FlightModel.Apply(go, Config);
+                ApplyFlightAssistScale(go);
+                _applied = true;
 
                 var rb = go.GetComponent<Rigidbody>();
-                if (rb != null && MassKg > 0f)
-                {
-                    float donorMass = Mathf.Max(rb.mass, 1f);
-                    rb.mass = MassKg;
-                    rb.ResetInertiaTensor();
-                    Su34Log.Info("mass set to " + MassKg + " kg (donor: " + donorMass.ToString("0") + " kg)");
-                }
-
-                ApplyEngineScale(go);
-                ApplyFlightAssistScale(go);
-
-                _applied = true;
-                Su34Log.Info("flight tuning applied");
+                CurrentMass = rb != null ? rb.mass : 0f;
+                Su34Log.Info("flight model applied, current mass " + CurrentMass.ToString("0") + " kg");
             }
             catch (Exception e)
             {
-                Su34Log.Warn("flight tuning skipped: " + e.Message);
+                Su34Log.Warn("flight tuning skipped: " + e);
                 _applied = true;
-            }
-        }
-
-        private void ApplyEngineScale(GameObject go)
-        {
-            if (Mathf.Approximately(ThrustScale, 1f)) return;
-            foreach (var mb in go.GetComponentsInChildren<MonoBehaviour>(true))
-            {
-                if (mb == null) continue;
-                if (mb.GetType().Name.IndexOf("Engine", StringComparison.OrdinalIgnoreCase) < 0) continue;
-                ScaleNumericField(mb, new[] { "maxThrust", "maxThrustN", "maxThrustPerEngine", "thrust" }, ThrustScale);
             }
         }
 
         private void ApplyFlightAssistScale(GameObject go)
         {
+            if (Mathf.Approximately(Config.PitchAuthority, 1f) &&
+                Mathf.Approximately(Config.RollAuthority, 1f) &&
+                Mathf.Approximately(Config.YawAuthority, 1f)) return;
+
             foreach (var mb in go.GetComponentsInChildren<MonoBehaviour>(true))
             {
                 if (mb == null || mb.GetType().Name != "FlightAssist") continue;
-                ScalePid(mb, "pitchPID", PitchAuthority);
-                ScalePid(mb, "rollPID", RollAuthority);
-                ScalePid(mb, "yawPID", YawAuthority);
+                ScalePid(mb, "pitchPID", Config.PitchAuthority);
+                ScalePid(mb, "rollPID", Config.RollAuthority);
+                ScalePid(mb, "yawPID", Config.YawAuthority);
             }
         }
 
@@ -244,58 +241,6 @@ namespace Su34Mod
             var kp = pid.GetType().GetField("kp", BindingFlags.Public | BindingFlags.Instance);
             if (kp == null || kp.FieldType != typeof(float)) return;
             kp.SetValue(pid, (float)kp.GetValue(pid) * scale);
-        }
-
-        private static void ScaleNumericField(object target, string[] names, float scale)
-        {
-            foreach (var name in names)
-            {
-                var f = target.GetType().GetField(name,
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-                if (f == null) continue;
-                if (f.FieldType == typeof(float))
-                {
-                    f.SetValue(target, (float)f.GetValue(target) * scale);
-                    return;
-                }
-                if (f.FieldType == typeof(float[]))
-                {
-                    var arr = (float[])f.GetValue(target);
-                    for (int i = 0; i < arr.Length; i++) arr[i] *= scale;
-                    return;
-                }
-            }
-        }
-
-        private void LoadConfig()
-        {
-            try
-            {
-                string path = Path.Combine(Main.ModFolder, CfgFile);
-                if (!File.Exists(path)) return;
-                foreach (var raw in File.ReadAllLines(path))
-                {
-                    var line = raw.Split('#')[0].Trim();
-                    if (line.Length == 0 || !line.Contains("=")) continue;
-                    var parts = line.Split(new[] { '=' }, 2);
-                    string key = parts[0].Trim().ToLowerInvariant();
-                    float value;
-                    if (!float.TryParse(parts[1].Trim(), System.Globalization.NumberStyles.Float,
-                            System.Globalization.CultureInfo.InvariantCulture, out value)) continue;
-                    switch (key)
-                    {
-                        case "masskg": MassKg = value; break;
-                        case "thrustscale": ThrustScale = value; break;
-                        case "pitchauthority": PitchAuthority = value; break;
-                        case "rollauthority": RollAuthority = value; break;
-                        case "yawauthority": YawAuthority = value; break;
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Su34Log.Warn("could not read " + CfgFile + ": " + e.Message);
-            }
         }
     }
 }

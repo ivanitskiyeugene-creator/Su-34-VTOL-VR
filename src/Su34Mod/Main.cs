@@ -50,6 +50,7 @@ namespace Su34Mod
             UnityEngine.Object.DontDestroyOnLoad(host);
             host.AddComponent<Su34DiagnosticsHost>();
             host.AddComponent<Su34FlightTuning>();
+            host.AddComponent<Su34SeatTuner>();
 
             Su34Log.Info("mod loaded, bundle path = " + BundlePath);
             VTResources.OnLoadingPlayerVehicles += AircraftAPI.VehicleAdd;
